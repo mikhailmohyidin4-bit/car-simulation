@@ -1,0 +1,66 @@
+{
+  "source": "Extracted from Ferrari_296_GTB.mp3",
+  "loops": [
+    {
+      "file": "idle_1100.wav",
+      "rpm": 1104,
+      "load": "both",
+      "_src": "17.50-22.40s",
+      "_len": "4.67s"
+    },
+    {
+      "file": "on_1280.wav",
+      "rpm": 1281,
+      "load": "on",
+      "_src": "22.46-23.08s",
+      "_len": "0.75s"
+    },
+    {
+      "file": "on_1600.wav",
+      "rpm": 1602,
+      "load": "on",
+      "_src": "23.21-24.06s",
+      "_len": "0.82s"
+    },
+    {
+      "file": "on_2100.wav",
+      "rpm": 2104,
+      "load": "on",
+      "_src": "24.13-24.37s",
+      "_len": "0.80s"
+    },
+    {
+      "file": "on_2630.wav",
+      "rpm": 2628,
+      "load": "on",
+      "_src": "24.47-24.66s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "on_3410.wav",
+      "rpm": 3405,
+      "load": "on",
+      "_src": "24.69-25.00s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "on_4340.wav",
+      "rpm": 4345,
+      "load": "on",
+      "_src": "25.04-25.35s",
+      "_len": "0.77s"
+    },
+    {
+      "file": "on_5630.wav",
+      "rpm": 5634,
+      "load": "on",
+      "_src": "25.42-25.74s",
+      "_len": "0.79s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 7300,
+  "synthFx": true
+}

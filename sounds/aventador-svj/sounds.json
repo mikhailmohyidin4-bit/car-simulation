@@ -1,0 +1,73 @@
+{
+  "source": "Extracted from 2019_Lamborghini_Aventador_SVJ.mp3",
+  "loops": [
+    {
+      "file": "idle_950.wav",
+      "rpm": 954,
+      "load": "both",
+      "_src": "194.50-200.50s",
+      "_len": "5.79s"
+    },
+    {
+      "file": "on_1220.wav",
+      "rpm": 1222,
+      "load": "on",
+      "_src": "179.90-181.44s",
+      "_len": "1.47s"
+    },
+    {
+      "file": "on_1340.wav",
+      "rpm": 1335,
+      "load": "on",
+      "_src": "153.38-153.94s",
+      "_len": "0.72s"
+    },
+    {
+      "file": "on_1550.wav",
+      "rpm": 1549,
+      "load": "on",
+      "_src": "181.51-182.66s",
+      "_len": "1.16s"
+    },
+    {
+      "file": "on_2120.wav",
+      "rpm": 2117,
+      "load": "on",
+      "_src": "154.87-155.41s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_2710.wav",
+      "rpm": 2705,
+      "load": "on",
+      "_src": "155.49-156.06s",
+      "_len": "0.80s"
+    },
+    {
+      "file": "on_3490.wav",
+      "rpm": 3485,
+      "load": "on",
+      "_src": "156.20-156.88s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_4410.wav",
+      "rpm": 4414,
+      "load": "on",
+      "_src": "157.03-157.66s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_5700.wav",
+      "rpm": 5699,
+      "load": "on",
+      "_src": "184.59-185.07s",
+      "_len": "0.78s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 7400,
+  "synthFx": true
+}

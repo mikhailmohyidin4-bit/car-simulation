@@ -47,6 +47,10 @@
       this.ctx = ctx;
       this.out = ctx.createGain(); this.out.gain.value = 0;
       this.out.connect(dest);
+      // loops -> mix -> lowpass -> out ; the startup clip goes straight to out
+      this.mix = ctx.createGain();
+      this.lp = ctx.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.frequency.value = 20000; this.lp.Q.value = 0.5;
+      this.mix.connect(this.lp); this.lp.connect(this.out);
       this.loops = []; this.startup = null; this.active = false; this.gen = 0;
       this.loadS = 0; this.startupUntil = 0; this.startupSrc = null; this.cfg = null;
     }
@@ -66,6 +70,7 @@
       this.stopStartup();
       this.out.gain.cancelScheduledValues(this.ctx.currentTime);
       this.out.gain.value = 0;
+      this.cfg = null;
     }
 
     // Returns the number of loops loaded (0 = no samples for this car, use the synth).
@@ -92,11 +97,15 @@
         src.loopStart = s.loopStart != null ? s.loopStart : tp.start;
         src.loopEnd = s.loopEnd != null ? s.loopEnd : tp.end;
         const gain = this.ctx.createGain(); gain.gain.value = 0;
-        src.connect(gain); gain.connect(this.out);
+        src.connect(gain); gain.connect(this.mix);
         src.start(t, src.loopStart);
         this.loops.push({ rpm: s.rpm, load: s.load || 'both', gain, src, vol: s.volume != null ? s.volume : 1 });
       }
       this.loops.sort((a, b) => a.rpm - b.rpm);
+      // with only on-throttle (or only off-throttle) recordings, fake the other side
+      // with a level + brightness change driven by throttle
+      const hasOn = this.loops.some((l) => l.load === 'on'), hasOff = this.loops.some((l) => l.load === 'off');
+      this.shapeLoad = cfg.loadShaping != null ? !!cfg.loadShaping : !(hasOn && hasOff);
       this.startup = startup;
       this.cfg = cfg;
       this.active = true;
@@ -136,6 +145,15 @@
       return w;
     }
 
+    // 0..1 share of the synth engine note: recordings only cover part of the rev
+    // range, so above `synthAbove` rpm we crossfade to the synth instead of
+    // pitch-shifting the top loop into chipmunk territory.
+    synthMix(rpm) {
+      const sa = this.active && this.cfg.synthAbove;
+      if (!sa) return 0;
+      return Math.min(1, Math.max(0, (rpm - sa) / (sa * 0.15)));
+    }
+
     update(st, volume) {
       if (!this.active) return;
       const t = this.ctx.currentTime;
@@ -143,6 +161,14 @@
       const master = (this.cfg.volume != null ? this.cfg.volume : 1) * volume;
       this.out.gain.setTargetAtTime(master, t, 0.05);
       this.loadS += (st.load - this.loadS) * 0.25;
+      const keep = 1 - this.synthMix(st.rpm);
+      if (this.shapeLoad) {
+        this.mix.gain.setTargetAtTime(keep * (0.62 + 0.38 * this.loadS), t, 0.04);
+        this.lp.frequency.setTargetAtTime(2200 + 16000 * Math.pow(this.loadS, 0.7), t, 0.04);
+      } else {
+        this.mix.gain.setTargetAtTime(keep, t, 0.04);
+        this.lp.frequency.setTargetAtTime(20000, t, 0.04);
+      }
 
       let on = this.loops.filter((l) => l.load !== 'off');
       let off = this.loops.filter((l) => l.load !== 'on');

@@ -1,0 +1,38 @@
+{
+  "source": "Extracted from FERRARI_F8_TRIBUTO.mp3",
+  "loops": [
+    {
+      "file": "idle_940.wav",
+      "rpm": 939,
+      "load": "both",
+      "_src": "56.50-61.50s",
+      "_len": "4.73s"
+    },
+    {
+      "file": "off_1340.wav",
+      "rpm": 1336,
+      "load": "off",
+      "_src": "273.21-273.41s",
+      "_len": "0.72s"
+    },
+    {
+      "file": "off_1640.wav",
+      "rpm": 1639,
+      "load": "off",
+      "_src": "270.38-270.60s",
+      "_len": "0.73s"
+    },
+    {
+      "file": "off_2180.wav",
+      "rpm": 2184,
+      "load": "off",
+      "_src": "272.66-272.91s",
+      "_len": "0.77s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 2800,
+  "synthFx": true
+}

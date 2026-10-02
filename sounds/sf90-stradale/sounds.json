@@ -1,0 +1,31 @@
+{
+  "source": "Extracted from Ferrari_SF90_Stradale.mp3",
+  "loops": [
+    {
+      "file": "idle_1570.wav",
+      "rpm": 1000,
+      "load": "both",
+      "_src": "141.50-151.50s",
+      "_len": "9.88s"
+    },
+    {
+      "file": "off_1720.wav",
+      "rpm": 1720,
+      "load": "off",
+      "_src": "158.91-159.05s",
+      "_len": "0.77s"
+    },
+    {
+      "file": "off_2160.wav",
+      "rpm": 2163,
+      "load": "off",
+      "_src": "158.71-158.87s",
+      "_len": "0.78s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 2800,
+  "synthFx": true
+}

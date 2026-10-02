@@ -247,7 +247,7 @@
     update(st) {
       if (!this.ready) return;
       const smp = this.useSamples;
-      this.post(Object.assign({ type: 'state', vol: this.volume, eng: smp ? 0 : 1, fx: smp ? this.fxMix : 1,
+      this.post(Object.assign({ type: 'state', vol: this.volume, eng: smp ? this.samples.synthMix(st.rpm) : 1, fx: smp ? this.fxMix : 1,
         starter: !(smp && this.samples.startup) }, st));
       if (smp) this.samples.update(st, this.volume);
     }

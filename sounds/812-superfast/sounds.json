@@ -1,0 +1,45 @@
+{
+  "source": "Extracted from Ferrari_812_Superfast.mp3",
+  "loops": [
+    {
+      "file": "idle_1000.wav",
+      "rpm": 999,
+      "load": "both",
+      "_src": "32.00-38.00s",
+      "_len": "5.76s"
+    },
+    {
+      "file": "on_1220.wav",
+      "rpm": 1222,
+      "load": "on",
+      "_src": "169.75-170.02s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_1660.wav",
+      "rpm": 1661,
+      "load": "on",
+      "_src": "170.07-170.31s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_2110.wav",
+      "rpm": 2114,
+      "load": "on",
+      "_src": "170.37-170.61s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_2700.wav",
+      "rpm": 2702,
+      "load": "on",
+      "_src": "170.65-170.86s",
+      "_len": "0.80s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 3500,
+  "synthFx": true
+}
