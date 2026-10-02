@@ -97,6 +97,7 @@ js/audio.js         AudioWorklet engine synth
 js/input.js         keyboard + Gamepad API + remapping
 js/dashboards.js    canvas instrument clusters (Lambo / Ferrari classic / Ferrari digital)
 js/dash-pro.js      car-specific clusters: Ferrari HMI (296 GTB / SF90), Ferrari analogue (F8 / 812), Huracán STO
+js/dash-lambo.js    car-specific clusters: Aventador SVJ, Huracán EVO (Strada/Sport + Corsa views), Revuelto
 js/main.js          app wiring, game loop, controls UI
 ```
 
