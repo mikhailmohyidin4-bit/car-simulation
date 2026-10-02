@@ -30,8 +30,14 @@
     return carbon;
   }
 
-  // ================================================================ FERRARI 296 GTB
-  function draw296(ctx, s, car) {
+  // Manettino label colours as shown on the Ferrari HMI
+  function modeColor(name) {
+    return { WET: '#7fe0ff', SPORT: '#ffd400', RACE: '#ffd400', 'CT OFF': '#ff9800', 'ESC OFF': '#ff3b30' }[name] || '#ffd400';
+  }
+
+  // ================================================================ FERRARI 296 GTB / SF90 STRADALE
+  function drawHMI(ctx, s, car) {
+    const sf = car.dash.variant === 'sf90';
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     // screen glass with carbon weave
     ctx.save();
@@ -55,8 +61,9 @@
     ctx.beginPath(); ctx.moveTo(470, 92); ctx.lineTo(600, 92); ctx.moveTo(1000, 92); ctx.lineTo(1130, 92); ctx.stroke();
     text(ctx, 'HYBRID', 545, 76, 22, '#7cff3a', 'center', 700);
     ctx.strokeStyle = '#7cff3a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(600, 92); ctx.lineTo(612, 64); ctx.stroke();
-    text(ctx, mode, 1060, 76, 22, '#ffd400', 'center', 700);
-    ctx.strokeStyle = '#ffd400'; ctx.beginPath(); ctx.moveTo(1000, 92); ctx.lineTo(988, 64); ctx.stroke();
+    const mc = modeColor(mode);
+    text(ctx, mode, 1060, 76, 22, mc, 'center', 700);
+    ctx.strokeStyle = mc; ctx.beginPath(); ctx.moveTo(1000, 92); ctx.lineTo(988, 64); ctx.stroke();
 
     // outer ring + fine ticks
     ctx.beginPath(); ctx.arc(cx, cy, 250, 0, TAU); ctx.fillStyle = '#0b0b0c'; ctx.fill();
@@ -74,10 +81,48 @@
     ctx.beginPath(); ctx.arc(cx, cy, 240, Math.PI / 2 + 0.12, Math.PI / 2 + 0.72); ctx.strokeStyle = '#1d2a1d'; ctx.stroke();
     if (boost > 0.01) { ctx.beginPath(); ctx.arc(cx, cy, 240, Math.PI / 2 + 0.12, Math.PI / 2 + 0.12 + 0.6 * boost); ctx.strokeStyle = '#7cff3a'; ctx.stroke(); }
     ctx.beginPath(); ctx.arc(cx, cy, 240, Math.PI / 2 - 0.72, Math.PI / 2 - 0.12); ctx.strokeStyle = '#1d2433'; ctx.stroke();
-    if (charge > 0.01) { ctx.beginPath(); ctx.arc(cx, cy, 240, Math.PI / 2 - 0.12 - 0.6 * charge, Math.PI / 2 - 0.12); ctx.strokeStyle = '#4fc3f7'; ctx.stroke(); }
+    if (charge > 0.01) {
+      if (sf) {
+        // SF90: segmented yellow-green charge bar
+        const n = Math.round(10 * charge);
+        for (let i = 0; i < n; i++) {
+          const aE = Math.PI / 2 - 0.12 - i * 0.06;
+          ctx.beginPath(); ctx.arc(cx, cy, 238, aE - 0.05, aE); ctx.lineWidth = 16; ctx.strokeStyle = '#c6ff3a'; ctx.stroke();
+        }
+        ctx.lineWidth = 6;
+      } else { ctx.beginPath(); ctx.arc(cx, cy, 240, Math.PI / 2 - 0.12 - 0.6 * charge, Math.PI / 2 - 0.12); ctx.strokeStyle = '#4fc3f7'; ctx.stroke(); }
+    }
     curvedLabel(ctx, 'BOOST', cx, cy, 259, Math.PI / 2 + 0.45, 15, '#c8c8c8');
     curvedLabel(ctx, 'CHARGE', cx, cy, 259, Math.PI / 2 - 0.45, 15, '#c8c8c8');
 
+    if (sf) sf90Dial(ctx, s, cx, cy, ang, max, red);
+    else yellowDial(ctx, s, cx, cy, ang, max, red);
+    // speed + gear boxes over the right half
+    roundRect(ctx, cx + 6, cy - 60, 214, 82, 6); ctx.fillStyle = 'rgba(32,33,36,.94)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.5; ctx.stroke();
+    if (sf) {
+      text(ctx, String(Math.round(s.kmh)), cx + 150, cy - 18, 60, '#fff', 'right', 700, FONT);
+      text(ctx, 'km/h', cx + 156, cy - 6, 17, '#fff', 'left', 600);
+    } else {
+      text(ctx, String(Math.round(s.kmh)), cx + 150, cy - 30, 54, '#fff', 'right', 700, FONT);
+      text(ctx, 'km/h', cx + 156, cy - 22, 17, '#fff', 'left', 600);
+      text(ctx, String(Math.round(s.kmh * 0.621371)), cx + 150, cy + 6, 22, '#fff', 'right', 600, FONT);
+      text(ctx, 'mph', cx + 156, cy + 8, 15, '#ccc', 'left', 600);
+    }
+    roundRect(ctx, cx + 6, cy + 30, 200, 112, 6); ctx.fillStyle = 'rgba(32,33,36,.94)'; ctx.fill(); ctx.stroke();
+    text(ctx, gearLabel(s), cx + 106, cy + 74, 76, s.cut ? '#ff3b30' : '#fff', 'center', 700, FONT);
+    text(ctx, s.auto ? 'AUTO' : 'MANUAL', cx + 106, cy + 124, 18, '#fff', 'center', 600);
+    if (s.lc) text(ctx, 'LAUNCH', cx - 60, cy, 18, '#ffd400', 'center', 700);
+
+    if (sf) { navMap(ctx, s); tripPanel(ctx, s); mediaPanel(ctx, s, car); } else { lightMap(ctx, s); radioPanel(ctx, car); vehicleMenu(ctx, s); }
+    // climate box
+    ctx.beginPath(); ctx.moveTo(1262, 486); ctx.lineTo(1500, 486); ctx.lineTo(1496, 526); ctx.lineTo(1238, 526); ctx.closePath();
+    ctx.fillStyle = 'rgba(30,31,34,.92)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.5; ctx.stroke();
+    text(ctx, sf ? '🚗   23.5°C   ⤲' : '22.0°C   A   ❄ 1', 1370, 507, 20, '#fff', 'center', 600);
+    statusBar(ctx, s, car);
+  }
+
+  function yellowDial(ctx, s, cx, cy, ang, max, red) {
     // yellow ring
     ctx.beginPath(); ctx.arc(cx, cy, 222, 0, TAU); ctx.arc(cx, cy, 118, 0, TAU, true);
     const yg = ctx.createRadialGradient(cx, cy - 40, 120, cx, cy, 222);
@@ -106,19 +151,9 @@
     const na = ang(s.rpm), [n1x, n1y] = polar(cx, cy, 70, na), [n2x, n2y] = polar(cx, cy, 238, na);
     ctx.strokeStyle = '#ff1a0a'; ctx.lineWidth = 5; ctx.shadowColor = '#ff1a0a'; ctx.shadowBlur = 8;
     ctx.beginPath(); ctx.moveTo(n1x, n1y); ctx.lineTo(n2x, n2y); ctx.stroke(); ctx.shadowBlur = 0;
-    // speed + gear boxes over the right half
-    roundRect(ctx, cx + 6, cy - 60, 214, 82, 6); ctx.fillStyle = 'rgba(32,33,36,.94)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.5; ctx.stroke();
-    text(ctx, String(Math.round(s.kmh)), cx + 150, cy - 30, 54, '#fff', 'right', 700, FONT);
-    text(ctx, 'km/h', cx + 156, cy - 22, 17, '#fff', 'left', 600);
-    text(ctx, String(Math.round(s.kmh * 0.621371)), cx + 150, cy + 6, 22, '#fff', 'right', 600, FONT);
-    text(ctx, 'mph', cx + 156, cy + 8, 15, '#ccc', 'left', 600);
-    roundRect(ctx, cx + 6, cy + 30, 200, 112, 6); ctx.fillStyle = 'rgba(32,33,36,.94)'; ctx.fill(); ctx.stroke();
-    text(ctx, gearLabel(s), cx + 106, cy + 74, 76, s.cut ? '#ff3b30' : '#fff', 'center', 700, FONT);
-    text(ctx, s.auto ? 'AUTO' : 'MANUAL', cx + 106, cy + 124, 18, '#fff', 'center', 600);
-    if (s.lc) text(ctx, 'LAUNCH', cx - 60, cy, 18, '#ffd400', 'center', 700);
+  }
 
-    // ---- left: map + media panels
+  function lightMap(ctx, s) {
     ctx.save();
     ctx.beginPath(); ctx.moveTo(176, 214); ctx.lineTo(430, 196); ctx.lineTo(440, 470); ctx.lineTo(190, 470); ctx.closePath();
     ctx.clip();
@@ -133,7 +168,9 @@
     ctx.restore();
     ctx.fillStyle = '#e8261c'; ctx.beginPath(); ctx.moveTo(360, 420); ctx.lineTo(346, 448); ctx.lineTo(360, 440); ctx.lineTo(374, 448); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.fillRect(196, 204, 52, 18); text(ctx, Math.floor(s.odoKm % 100000).toString(), 222, 213, 13, '#222', 'center', 700);
+  }
 
+  function radioPanel(ctx, car) {
     roundRect(ctx, 452, 214, 150, 256, 8); ctx.fillStyle = 'rgba(14,15,17,.92)'; ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.5; ctx.stroke();
     roundRect(ctx, 482, 236, 90, 78, 4); ctx.fillStyle = '#d9d9d9'; ctx.fill();
@@ -145,8 +182,9 @@
     text(ctx, 'FM 98.8', 527, 350, 24, '#fff', 'center', 700);
     text(ctx, 'Now playing:', 527, 388, 15, '#cfcfcf', 'center', 600);
     text(ctx, 'V' + car.engine.cylinders + ' symphony', 527, 408, 15, '#cfcfcf', 'center', 600);
+  }
 
-    // ---- right: menu + vehicle page
+  function vehicleMenu(ctx, s) {
     const items = ['Vehicle', 'Audio', 'Navigation', 'Phone', 'Settings'];
     items.forEach((it, i) => {
       const y = 214 + i * 36, sel = i === 0;
@@ -163,13 +201,10 @@
       text(ctx, r[0], 1290, 222 + i * 32, 15, '#9a9ca2', 'left', 700);
       text(ctx, r[1], 1500, 222 + i * 32, 19, '#fff', 'right', 600);
     });
-    // climate box
-    ctx.beginPath(); ctx.moveTo(1262, 486); ctx.lineTo(1500, 486); ctx.lineTo(1496, 526); ctx.lineTo(1238, 526); ctx.closePath();
-    ctx.fillStyle = 'rgba(30,31,34,.92)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.5; ctx.stroke();
-    text(ctx, '22.0°C   A   ❄ 1', 1370, 507, 20, '#fff', 'center', 600);
+  }
 
-    // ---- bottom status bar
-    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(80, 588, 1440, 34);
+  function statusBar(ctx, s, car) {
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(80, 556, 1440, 38);
     text(ctx, '≡D', 196, 570, 20, '#fff', 'center', 700); text(ctx, 'AUTO', 196, 586, 11, '#fff', 'center', 700);
     text(ctx, '⛽', 232, 574, 18, '#fff', 'center', 600);
     for (let i = 0; i < 10; i++) {
@@ -179,7 +214,7 @@
     text(ctx, 'odo', 410, 574, 17, '#fff', 'left', 600);
     text(ctx, Math.floor(s.odoKm) + ' km', 455, 574, 17, '#fff', 'left', 600);
     text(ctx, '⛽ ' + Math.round(s.rangeKm) + ' km', 590, 574, 17, '#ff9800', 'left', 700);
-    text(ctx, '⚡ ' + Math.round(s.battery * 25) + ' km', 690, 574, 17, '#7cff3a', 'left', 700);
+    text(ctx, '⚡ ' + Math.round(s.battery * (car.dash.variant === 'sf90' ? 25 : 25)) + ' km', 690, 574, 17, '#7cff3a', 'left', 700);
     text(ctx, Math.round(s.ambient) + '°C', 790, 574, 17, '#fff', 'left', 600);
     ctx.beginPath(); ctx.moveTo(850, 556); ctx.lineTo(1010, 556); ctx.lineTo(1000, 592); ctx.lineTo(860, 592); ctx.closePath();
     ctx.fillStyle = '#121316'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.stroke();
@@ -191,6 +226,74 @@
       text(ctx, '⚙', 130, 520, 20, '#ff9800', 'center', 700);
       text(ctx, 'Ⓟ', 1500, 462, 22, '#ff2a1a', 'center', 700);
     }
+  }
+
+  function sf90Dial(ctx, s, cx, cy, ang, max, red) {
+    // dark face, white numerals, red top-end arc, needle from the centre
+    ctx.beginPath(); ctx.arc(cx, cy, 224, 0, TAU);
+    const fg = ctx.createRadialGradient(cx, cy, 40, cx, cy, 224);
+    fg.addColorStop(0, '#0b0c0e'); fg.addColorStop(0.6, '#15171a'); fg.addColorStop(1, '#202226');
+    ctx.fillStyle = fg; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 238, ang(red - 500), ang(max)); ctx.strokeStyle = '#e8160c'; ctx.lineWidth = 12; ctx.stroke();
+    for (let r = 0; r <= max; r += 100) {
+      const a = ang(r), major = r % 1000 === 0, half = r % 500 === 0;
+      const [x1, y1] = polar(cx, cy, 224, a), [x2, y2] = polar(cx, cy, major ? 200 : half ? 208 : 214, a);
+      ctx.strokeStyle = r >= red ? '#ff3b30' : '#e6e6e6'; ctx.lineWidth = major ? 3 : 1.3;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    for (let k = 0; k <= max / 1000; k++) {
+      const [x, y] = polar(cx, cy, 166, ang(k * 1000));
+      text(ctx, String(k), x, y, 50, k * 1000 >= red ? '#ff2a1a' : '#f4f4f4', 'center', 700, FONT);
+    }
+    for (const r of [118, 84]) { ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    const na = ang(s.rpm), [n1x, n1y] = polar(cx, cy, 18, na), [n2x, n2y] = polar(cx, cy, 222, na);
+    ctx.strokeStyle = '#ff1a0a'; ctx.lineWidth = 5; ctx.shadowColor = '#ff1a0a'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(n1x, n1y); ctx.lineTo(n2x, n2y); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, TAU); ctx.fillStyle = '#2a2b2e'; ctx.fill();
+  }
+
+  function navMap(ctx, s) {
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(120, 214); ctx.lineTo(300, 200); ctx.lineTo(310, 470); ctx.lineTo(132, 470); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = '#0c1a33'; ctx.fillRect(110, 190, 210, 290);
+    const off = ((s.tripKm || 0) * 600) % 46;
+    ctx.strokeStyle = '#2d4f86'; ctx.lineWidth = 2;
+    for (let y = 150 + off; y < 480; y += 46) { ctx.beginPath(); ctx.moveTo(110, y); ctx.lineTo(320, y - 18); ctx.stroke(); }
+    for (let x = 120; x < 320; x += 42) { ctx.beginPath(); ctx.moveTo(x, 190); ctx.lineTo(x + 10, 480); ctx.stroke(); }
+    ctx.strokeStyle = '#4a77c4'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(205, 190); ctx.lineTo(214, 480); ctx.stroke();
+    ctx.fillStyle = '#9fb8e0'; ctx.font = `600 10px ${FONT}`;
+    ['MAIN ST', '7TH AVE', 'PARK RD', '5TH ST'].forEach((t, i) => ctx.fillText(t, 130 + (i % 2) * 90, 230 + i * 60 + off * 0.5));
+    ctx.restore();
+    ctx.fillStyle = '#e8261c'; ctx.beginPath(); ctx.moveTo(210, 418); ctx.lineTo(196, 446); ctx.lineTo(210, 438); ctx.lineTo(224, 446); ctx.closePath(); ctx.fill();
+  }
+
+  function tripPanel(ctx, s) {
+    roundRect(ctx, 318, 214, 238, 256, 8); ctx.fillStyle = 'rgba(28,30,34,.92)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1.5; ctx.stroke();
+    const t = Math.floor((s.sessionT || 0) / 60);
+    const rows = [['Trip', null], ['Maximum speed', Math.round(s.maxKmh) + ' km/h'], ['Average speed', Math.round(s.avgKmh || 0) + ' km/h'],
+      ['Distance', fmt(s.tripKm, 1) + ' km'], ['Time', String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0') + ' hh:mm']];
+    let y = 238;
+    rows.forEach(([k, v]) => {
+      text(ctx, k, 437, y, k === 'Trip' ? 20 : 18, '#fff', 'center', 600); y += 22;
+      if (v) { text(ctx, v, 437, y, 18, '#e6e6e6', 'center', 500); y += 28; } else y += 6;
+    });
+  }
+
+  function mediaPanel(ctx, s, car) {
+    text(ctx, '♫', 1052, 214, 20, '#fff', 'center', 600);
+    text(ctx, '⏚ USB', 1100, 248, 18, '#fff', 'left', 600);
+    const sec = Math.floor((s.sessionT || 0) + 250) % 600;
+    text(ctx, Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'), 1100, 272, 16, '#ddd', 'left', 600);
+    text(ctx, 'Engine soundtrack', 1270, 334, 22, '#fff', 'center', 600);
+    text(ctx, car.engine.layout.split(' ')[0] + ' — various revs', 1250, 360, 17, '#cfcfcf', 'center', 500);
+    roundRect(ctx, 1408, 300, 84, 84, 4); ctx.fillStyle = '#e8e8e8'; ctx.fill();
+    roundRect(ctx, 1414, 306, 72, 72, 3);
+    const g = ctx.createRadialGradient(1450, 330, 4, 1450, 342, 50); g.addColorStop(0, '#666'); g.addColorStop(1, '#111');
+    ctx.fillStyle = g; ctx.fill();
+    text(ctx, '♪', 1450, 342, 34, '#ddd', 'center', 700);
+    text(ctx, '2:41', 1060, 458, 17, '#ddd', 'left', 600);
+    text(ctx, '⤨', 1140, 458, 20, '#ddd', 'center', 600);
   }
 
   function curvedLabel(ctx, str, cx, cy, r, mid, size, color) {
@@ -215,49 +318,10 @@
     // 0 at 6 o'clock, clockwise, 10 at 3 o'clock (270 deg)
     const ang = (r) => Math.PI / 2 + (clamp(r, 0, max) / max) * Math.PI * 1.5;
 
-    // ---- left screen: Manettino + turbo efficiency
-    screenBox(ctx, 120, 150, 420, 330);
-    const mode = car.dash.modes[s.modeIdx].name;
-    ctx.beginPath(); ctx.moveTo(136, 164); ctx.lineTo(262, 164); ctx.lineTo(250, 194); ctx.lineTo(136, 194); ctx.closePath();
-    ctx.fillStyle = '#e6e6e6'; ctx.fill();
-    text(ctx, mode, 194, 180, 20, '#111', 'center', 700);
-    text(ctx, '≡D', 300, 180, 20, '#cfd8dc', 'center', 700);
-    text(ctx, Math.round(s.ambient) + '°', 520, 180, 20, '#fff', 'right', 600);
-    const turbo = clamp(s.boost, 0, 1);
-    analogGauge(ctx, 330, 320, 92, 0, 100, turbo * 100, [0, 100], 0, '%', '#fff');
-    text(ctx, Math.round(turbo * 100), 330, 312, 34, '#fff', 'center', 700);
-    text(ctx, '%', 330, 342, 16, '#bbb', 'center', 600);
-    text(ctx, 'TURBO', 330, 388, 14, '#ddd', 'center', 700);
-    text(ctx, 'EFFICIENCY', 330, 404, 14, '#ddd', 'center', 700);
-    text(ctx, '● ○ ○', 330, 424, 12, '#aaa', 'center', 600);
-    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(132, 440, 396, 30);
-    for (let i = 0; i < 10; i++) { ctx.fillStyle = i / 10 < s.fuel ? '#ff7a00' : '#3a3a3a'; ctx.fillRect(140 + i * 13, 448, 10, 14); }
-    text(ctx, 'km/h', 380, 448, 13, '#bbb', 'center', 600);
-    text(ctx, String(Math.round(s.avgKmh || 0)), 380, 462, 15, '#fff', 'center', 700);
-    text(ctx, 'km tot', 500, 448, 13, '#bbb', 'right', 600);
-    text(ctx, fmt(s.tripKm, 1), 520, 462, 16, '#fff', 'right', 700);
-
-    // ---- right screen: analogue speedometer
-    screenBox(ctx, 1060, 150, 420, 330);
-    const scx = 1270, scy = 318, sr = 118, vmax = 360;
-    const sAng = (v) => Math.PI * 0.75 + (clamp(v, 0, vmax) / vmax) * Math.PI * 1.5;
-    ctx.beginPath(); ctx.arc(scx, scy, sr + 6, 0, TAU); ctx.fillStyle = '#060708'; ctx.fill();
-    ctx.beginPath(); ctx.arc(scx, scy, sr + 6, Math.PI * 0.75, Math.PI * 2.25); ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2; ctx.stroke();
-    for (let v = 0; v <= vmax; v += 10) {
-      const a = sAng(v), major = v % 30 === 0, [x1, y1] = polar(scx, scy, sr + 4, a), [x2, y2] = polar(scx, scy, major ? sr - 12 : sr - 4, a);
-      ctx.strokeStyle = '#eee'; ctx.lineWidth = major ? 2.5 : 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      if (major && v > 0) { const [tx, ty] = polar(scx, scy, sr - 30, a); text(ctx, String(v), tx, ty, 15, '#fff', 'center', 700); }
-    }
-    text(ctx, 'km/h', scx, scy - 36, 15, '#fff', 'center', 600);
-    text(ctx, String(Math.round(s.kmh)), scx, scy + 52, 22, '#fff', 'center', 700, FONT);
-    const sa = sAng(s.kmh), [sx, sy] = polar(scx, scy, sr - 8, sa), [tx2, ty2] = polar(scx, scy, -16, sa);
-    ctx.strokeStyle = '#f2f2f2'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tx2, ty2); ctx.lineTo(sx, sy); ctx.stroke();
-    ctx.beginPath(); ctx.arc(scx, scy, 9, 0, TAU); ctx.fillStyle = '#2a2a2a'; ctx.fill();
-    ctx.strokeStyle = '#e8261c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(1080, 452); ctx.lineTo(1460, 452); ctx.stroke();
-    text(ctx, 'ODO ' + Math.floor(s.odoKm) + ' km', 1090, 466, 14, '#ccc', 'left', 600);
-    text(ctx, clock(), 1460, 466, 14, '#ccc', 'right', 600);
-    text(ctx, '0-100 ' + (s.t100 != null ? fmt(s.t100, 2) + 's' : '--'), 1090, 176, 15, '#ccc', 'left', 600);
-    text(ctx, 'VMAX ' + Math.round(s.maxKmh), 1460, 176, 15, '#ccc', 'right', 600);
+    // F8: turbo screen left, speedo right. 812: speedo left, temperatures right.
+    const v812 = car.dash.variant === '812';
+    if (v812) { speedoScreen(ctx, s, 120, true); tempsScreen(ctx, s, car, 1060); telltales(ctx, s); }
+    else { turboScreen(ctx, s, car, 120); speedoScreen(ctx, s, 1060, false); }
 
     // ---- central tach: deep bezel, mustard-yellow face
     ctx.beginPath(); ctx.arc(cx, cy, R + 30, 0, TAU);
@@ -305,7 +369,106 @@
     // glass glare
     ctx.beginPath(); ctx.ellipse(cx - 60, cy - 120, 170, 70, -0.5, 0, TAU); ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fill();
     // telltales
-    if (!s.running) text(ctx, 'Ⓟ', 1040, 120, 22, '#ff2a1a', 'center', 700);
+    if (!s.running && car.dash.variant !== '812') text(ctx, 'Ⓟ', 1040, 120, 22, '#ff2a1a', 'center', 700);
+  }
+
+  function turboScreen(ctx, s, car, x) {
+    ctx.save(); ctx.translate(x - 120, 0);
+    screenBox(ctx, 120, 150, 420, 330);
+    const mode = car.dash.modes[s.modeIdx].name;
+    manettinoTag(ctx, mode, 136, 164);
+    text(ctx, '≡D', 300, 180, 20, '#cfd8dc', 'center', 700);
+    text(ctx, Math.round(s.ambient) + '°', 520, 180, 20, '#fff', 'right', 600);
+    const turbo = clamp(s.boost, 0, 1);
+    analogGauge(ctx, 330, 320, 92, 0, 100, turbo * 100, [0, 100], 0, '%', '#fff');
+    text(ctx, Math.round(turbo * 100), 330, 312, 34, '#fff', 'center', 700);
+    text(ctx, '%', 330, 342, 16, '#bbb', 'center', 600);
+    text(ctx, 'TURBO', 330, 388, 14, '#ddd', 'center', 700);
+    text(ctx, 'EFFICIENCY', 330, 404, 14, '#ddd', 'center', 700);
+    text(ctx, '● ○ ○', 330, 424, 12, '#aaa', 'center', 600);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(132, 440, 396, 30);
+    for (let i = 0; i < 10; i++) { ctx.fillStyle = i / 10 < s.fuel ? '#ff7a00' : '#3a3a3a'; ctx.fillRect(140 + i * 13, 448, 10, 14); }
+    text(ctx, 'km/h', 380, 448, 13, '#bbb', 'center', 600);
+    text(ctx, String(Math.round(s.avgKmh || 0)), 380, 462, 15, '#fff', 'center', 700);
+    text(ctx, 'km tot', 500, 448, 13, '#bbb', 'right', 600);
+    text(ctx, fmt(s.tripKm, 1), 520, 462, 16, '#fff', 'right', 700);
+
+    ctx.restore();
+  }
+
+  function manettinoTag(ctx, mode, x, y) {
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 126, y); ctx.lineTo(x + 114, y + 30); ctx.lineTo(x, y + 30); ctx.closePath();
+    ctx.fillStyle = '#e6e6e6'; ctx.fill();
+    text(ctx, mode, x + 58, y + 16, 20, '#111', 'center', 700);
+  }
+
+  function speedoScreen(ctx, s, x, withClock) {
+    ctx.save(); ctx.translate(x - 1060, 0);
+    screenBox(ctx, 1060, 150, 420, 330);
+    const scx = 1270, scy = 318, sr = 118, vmax = 360;
+    const sAng = (v) => Math.PI * 0.75 + (clamp(v, 0, vmax) / vmax) * Math.PI * 1.5;
+    ctx.beginPath(); ctx.arc(scx, scy, sr + 6, 0, TAU); ctx.fillStyle = '#060708'; ctx.fill();
+    ctx.beginPath(); ctx.arc(scx, scy, sr + 6, Math.PI * 0.75, Math.PI * 2.25); ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2; ctx.stroke();
+    for (let v = 0; v <= vmax; v += 10) {
+      const a = sAng(v), major = v % 30 === 0, [x1, y1] = polar(scx, scy, sr + 4, a), [x2, y2] = polar(scx, scy, major ? sr - 12 : sr - 4, a);
+      ctx.strokeStyle = '#eee'; ctx.lineWidth = major ? 2.5 : 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      if (major && v > 0) { const [tx, ty] = polar(scx, scy, sr - 30, a); text(ctx, String(v), tx, ty, 15, '#fff', 'center', 700); }
+    }
+    text(ctx, 'km/h', scx, scy - 36, 15, '#fff', 'center', 600);
+    text(ctx, String(Math.round(s.kmh)), scx, scy + 52, 22, '#fff', 'center', 700, FONT);
+    const sa = sAng(s.kmh), [sx, sy] = polar(scx, scy, sr - 8, sa), [tx2, ty2] = polar(scx, scy, -16, sa);
+    ctx.strokeStyle = '#f2f2f2'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(tx2, ty2); ctx.lineTo(sx, sy); ctx.stroke();
+    ctx.beginPath(); ctx.arc(scx, scy, 9, 0, TAU); ctx.fillStyle = '#2a2a2a'; ctx.fill();
+    ctx.strokeStyle = '#e8261c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(1080, 452); ctx.lineTo(1460, 452); ctx.stroke();
+    text(ctx, 'ODO ' + Math.floor(s.odoKm) + ' km', 1090, 466, 14, '#ccc', 'left', 600);
+    text(ctx, clock(), 1460, 466, 14, '#ccc', 'right', 600);
+    text(ctx, '0-100 ' + (s.t100 != null ? fmt(s.t100, 2) + 's' : '--'), 1090, 176, 15, '#ccc', 'left', 600);
+    text(ctx, 'VMAX ' + Math.round(s.maxKmh), 1460, 176, 15, '#ccc', 'right', 600);
+
+    if (withClock) { ctx.fillStyle = '#07080a'; ctx.fillRect(1074, 162, 220, 26); text(ctx, clock(), 1090, 176, 17, '#fff', 'left', 600); }
+    ctx.restore();
+  }
+
+  // 812: oil + coolant temperature gauges, Manettino tag, fuel / avg speed / odo strip
+  function tempsScreen(ctx, s, car, x) {
+    ctx.save(); ctx.translate(x - 1060, 0);
+    screenBox(ctx, 1060, 150, 420, 330);
+    manettinoTag(ctx, car.dash.modes[s.modeIdx].name, 1076, 164);
+    text(ctx, Math.round(s.ambient) + '°C', 1462, 180, 20, '#fff', 'right', 600);
+    tempGauge(ctx, 1185, 318, 82, s.oilT, 'OIL');
+    tempGauge(ctx, 1355, 318, 82, s.waterT, 'H2O');
+    text(ctx, '● ○ ○', 1270, 418, 12, '#aaa', 'center', 600);
+    ctx.fillStyle = '#e8e8e8'; ctx.fillRect(1072, 436, 396, 34);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(1076, 440, 120, 26);
+    for (let i = 0; i < 8; i++) { ctx.fillStyle = i / 8 < s.fuel ? '#ff7a00' : '#3a3a3a'; ctx.fillRect(1080 + i * 14, 444, 11, 12); }
+    text(ctx, '0', 1082, 462, 10, '#bbb', 'center', 600); text(ctx, '1/2', 1136, 462, 10, '#bbb', 'center', 600);
+    roundRect(ctx, 1222, 442, 26, 20, 4); ctx.strokeStyle = '#e8261c'; ctx.lineWidth = 2.5; ctx.stroke();
+    text(ctx, 'km/h', 1330, 446, 12, '#333', 'center', 700);
+    text(ctx, String(Math.round(s.avgKmh || 0)), 1330, 461, 15, '#111', 'center', 700);
+    text(ctx, 'km', 1450, 446, 12, '#333', 'right', 700);
+    text(ctx, String(Math.floor(s.odoKm)), 1460, 461, 15, '#111', 'right', 700);
+    ctx.restore();
+  }
+
+  function tempGauge(ctx, cx, cy, r, v, label) {
+    const lo = 40, hi = 150, a0 = Math.PI * 0.8, a1 = Math.PI * 2.2;
+    const a = (t) => a0 + ((clamp(t, lo, hi) - lo) / (hi - lo)) * (a1 - a0);
+    ctx.lineWidth = 9; ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.arc(cx, cy, r, a0, a(70)); ctx.strokeStyle = '#2f6bff'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, r, a(70), a(130)); ctx.strokeStyle = '#d9dde3'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, r, a(130), a1); ctx.strokeStyle = '#ff2a1a'; ctx.stroke();
+    const [mx, my] = polar(cx, cy, r - 14, a(v)), [mx2, my2] = polar(cx, cy, r + 8, a(v));
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx2, my2); ctx.stroke();
+    text(ctx, String(Math.round(v)), cx, cy - 6, 34, '#fff', 'center', 700);
+    text(ctx, '°C', cx, cy + 22, 15, '#ccc', 'center', 600);
+    text(ctx, label === 'OIL' ? '🛢' : '🌡', cx, cy + 58, 20, '#ddd', 'center', 600);
+  }
+
+  // warning lights in the binnacle above the screens while the engine is off
+  function telltales(ctx, s) {
+    if (s.running) return;
+    const L = [['⚙', '#ff9800', 470], ['⚠', '#ff2a1a', 510], ['Ⓟ', '#ff2a1a', 1090], ['▭', '#ff2a1a', 1130], ['🛢', '#ff2a1a', 1170]];
+    L.forEach(([g, c, x]) => text(ctx, g, x, 120, 20, c, 'center', 700));
   }
 
   function screenBox(ctx, x, y, w, h) {
@@ -522,7 +685,9 @@
     ctx.restore();
   }
 
-  D.register('ferrari-296', draw296);
+  D.register('ferrari-296', drawHMI);
+  D.register('ferrari-hmi', drawHMI);
   D.register('ferrari-f8', drawF8);
+  D.register('ferrari-analog', drawF8);
   D.register('lambo-sto', drawSTO);
 })();
