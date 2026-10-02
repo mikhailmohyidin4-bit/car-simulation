@@ -35,7 +35,7 @@
     let maxP = 0;
     for (let r = e.idle; r <= e.limiter; r += 10) maxP = Math.max(maxP, interp(e.curve, r) * r * RPM2RAD);
     e.tScale = (e.powerKw * 1000) / maxP;
-    const vmax = car.perf.vmax / 3.6;
+    const vmax = (car.perf.vmaxAero || car.perf.vmax) / 3.6;
     const overall = (tr.topGearRpm * RPM2RAD * car.tireRadius) / vmax;
     tr.finalDrive = overall / tr.gears[tr.gears.length - 1];
     tr.ratios = tr.gears.map((g) => g * tr.finalDrive);
@@ -210,6 +210,8 @@
       // --- traction limit ---
       const fMax = mu * m * G;
       let fDrive = clamp(fEng + fE, -fMax, fMax);
+      // electronic top-speed limiter (e.g. BMW M5: 250 km/h, 305 with M Driver's Package)
+      if (car.speedLimit && fDrive > 0) fDrive *= clamp((car.speedLimit + 0.5 - this.v * 3.6) / 1.5, 0, 1);
       this.wheelForce = fDrive;
 
       // --- brakes & resistances ---
@@ -269,7 +271,7 @@
   // ---------------- calibration ----------------
   function topSpeedCdA(car, eff) {
     const e = car.engine, tr = car.trans, r = car.tireRadius;
-    const vt = (car.perf.vmax / 3.6) * 1.004;
+    const vt = ((car.perf.vmaxAero || car.perf.vmax) / 3.6) * 1.004;
     let best = 0;
     for (const ratio of tr.ratios) {
       const rpm = (vt / r) * ratio / RPM2RAD;

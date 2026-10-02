@@ -12,10 +12,11 @@ Put audio files in a folder named after the car id. The app then uses your recor
 | Ferrari 812 Superfast | `sounds/812-superfast/` |
 | Ferrari SF90 Stradale | `sounds/sf90-stradale/` |
 | Ferrari 296 GTB | `sounds/296-gtb/` |
+| BMW M5 Competition | `sounds/m5-competition/` |
 
 ## Included recordings
 
-All eight cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
+All nine cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
 
 | Car | What the recording contains | Recorded up to | Synth above |
 |---|---|---|---|
@@ -27,6 +28,7 @@ All eight cars ship with loops extracted from the owner's recordings. The **Reco
 | Huracán EVO | Cold start, idle (~1200 rpm), pull-away | ~2800 rpm | 3600 rpm |
 | Huracán STO | Cold start, idle (~960 rpm), revs | ~2400 rpm | 3100 rpm |
 | Revuelto | Cold start, high idle (~1100 rpm), short rev | ~1700 rpm | 2200 rpm |
+| M5 Competition | Cold start, cold idle (~1390 rpm), warm idle (~790 rpm), blips | ~3300 rpm | 4200 rpm |
 
 ### How the loops were made
 

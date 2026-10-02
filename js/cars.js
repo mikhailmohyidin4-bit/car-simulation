@@ -192,4 +192,29 @@ window.CARS = [
              noise: 0.3, lpBase: 1600, lpRpm: 0.6, lpLoad: 2200, pops: 0.05, crack: 0.6, turbo: 0.03, eWhine: 0.025,
              bank: [1, 0.96, 1.03, 0.98, 1.01, 0.95] },
   },
+  {
+    id: 'm5-competition',
+    brand: 'BMW',
+    model: 'M5 Competition',
+    year: 2019,
+    color: '#1c69d4',
+    engine: {
+      layout: 'V8 twin-turbo (S63)', cylinders: 8, displacement: 4.4, aspiration: 'TT',
+      idle: 790, limiter: 7200, powerKw: 460, powerRpm: 6000, torqueNm: 750, torqueRpm: 1800,
+      curve: [[700, 380], [1000, 470], [1500, 650], [1800, 750], [3000, 750], [4000, 750], [5000, 750], [5860, 750],
+              [6000, 732], [6500, 660], [7000, 590], [7200, 560], [7400, 520]],
+    },
+    trans: { name: '8-speed M Steptronic (torque converter)', gears: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640],
+             shiftTime: 0.09, launchRpm: 3200, topGearRpm: 5000 },
+    drive: 'AWD', dryKg: 1865, massKg: 1940, tireRadius: 0.345, tire: '285/35 ZR20',
+    // 305 km/h with the M Driver's Package (limited); aero top speed estimated slightly higher
+    perf: { vmax: 305, vmaxAero: 315, t100: 3.3, t200: 10.8, brake100: 33.5 },
+    speedLimit: 305,
+    dash: { style: 'bmw-m', dialMax: 8000, redline: 7200, speedoMax: 330, defaultMode: 1,
+            modes: [{ name: 'COMFORT', aggr: 0.0, color: '#4fc3f7' }, { name: 'SPORT', aggr: 0.5, color: '#ff3b30' }, { name: 'SPORT+', aggr: 1.0, color: '#ff3b30' }] },
+    // cross-plane V8: uneven bank pulses give the burble
+    sound: { res: [[95, 1.8, 1.0], [380, 2.6, 0.7], [1500, 3.2, 0.3]], direct: 0.65, drive: 2.2,
+             noise: 0.3, lpBase: 900, lpRpm: 0.38, lpLoad: 1500, pops: 0.06, crack: 0.6, turbo: 0.03,
+             bank: [1.08, 0.82, 1.12, 0.86, 0.9, 1.1, 0.84, 1.06] },
+  },
 ];

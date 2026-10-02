@@ -1,0 +1,52 @@
+{
+  "source": "Extracted from Pure_Sound_2019_BMW_M5_Competition_Cold_Starts_Revs__More.mp3",
+  "loops": [
+    {
+      "file": "idle_790.wav",
+      "rpm": 794,
+      "load": "both",
+      "_src": "78.20-84.00s",
+      "_len": "5.59s"
+    },
+    {
+      "file": "off_1390.wav",
+      "rpm": 1387,
+      "load": "off",
+      "_src": "60.00-74.00s",
+      "_len": "13.76s"
+    },
+    {
+      "file": "off_1840.wav",
+      "rpm": 1843,
+      "load": "off",
+      "_src": "248.67-248.91s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "off_2380.wav",
+      "rpm": 2383,
+      "load": "off",
+      "_src": "248.28-248.60s",
+      "_len": "0.76s"
+    },
+    {
+      "file": "off_2600.wav",
+      "rpm": 2604,
+      "load": "off",
+      "_src": "251.60-251.91s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "off_3260.wav",
+      "rpm": 3264,
+      "load": "off",
+      "_src": "250.94-251.53s",
+      "_len": "0.77s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 4200,
+  "synthFx": true
+}
