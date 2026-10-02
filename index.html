@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supercar Dash Sim</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- GARAGE -->
+  <section id="garage" class="screen active">
+    <header class="top">
+      <h1>SUPERCAR <span>DASH SIM</span></h1>
+      <p>Pick a car. Start the engine. Send it.</p>
+    </header>
+    <div id="brandTabs" class="tabs"></div>
+    <div id="carGrid" class="grid"></div>
+    <footer class="foot">
+      Keyboard · DualSense · DualShock 4 · Steering wheels (PXN V9 etc.) — remap anything in <b>Controls</b>.
+    </footer>
+  </section>
+
+  <!-- DRIVE -->
+  <section id="drive" class="screen">
+    <div class="bar">
+      <button id="backBtn" class="ghost">← Garage</button>
+      <div id="carTitle" class="title"></div>
+      <div class="dev"><span id="devName">Keyboard</span></div>
+      <button id="controlsBtn" class="ghost">🎮 Controls</button>
+    </div>
+    <div class="dashWrap"><canvas id="dash"></canvas></div>
+    <div class="hud">
+      <div class="pedals">
+        <div class="pedal"><label>THROTTLE</label><div class="track"><div id="thrBar" class="fill thr"></div></div></div>
+        <div class="pedal"><label>BRAKE</label><div class="track"><div id="brkBar" class="fill brk"></div></div></div>
+      </div>
+      <div class="actions">
+        <button id="engineBtn" class="big">⏻ START ENGINE</button>
+        <button id="transBtn">AUTO</button>
+        <button id="modeBtn">MODE</button>
+        <button id="downBtn">−</button>
+        <button id="upBtn">+</button>
+        <button id="tripBtn">Reset trip</button>
+        <label class="vol">🔊 <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+      </div>
+      <div id="specs" class="specs"></div>
+      <div id="hint" class="hint"></div>
+    </div>
+    <div id="toast" class="toast"></div>
+  </section>
+
+  <!-- CONTROLS MODAL -->
+  <div id="controls" class="modal">
+    <div class="panel">
+      <div class="panelHead">
+        <h2>Controls</h2>
+        <button id="closeControls" class="ghost">✕</button>
+      </div>
+      <div class="row">
+        <label>Device</label>
+        <select id="devSelect"></select>
+        <button id="resetBinds" class="ghost">Reset to defaults</button>
+      </div>
+      <p id="devNote" class="note"></p>
+      <table class="binds"><tbody id="bindRows"></tbody></table>
+      <div id="captureMsg" class="capture"></div>
+      <details id="rawWrap">
+        <summary>Live raw input (for checking your wheel / pedals)</summary>
+        <pre id="raw"></pre>
+      </details>
+    </div>
+  </div>
+
+  <script src="js/cars.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/dashboards.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
