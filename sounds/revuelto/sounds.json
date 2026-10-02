@@ -1,0 +1,31 @@
+{
+  "source": "Extracted from Lamborghini_Revuelto_V12.mp3",
+  "loops": [
+    {
+      "file": "idle_1120.wav",
+      "rpm": 1118,
+      "load": "both",
+      "_src": "0.90-2.90s",
+      "_len": "1.83s"
+    },
+    {
+      "file": "on_1270.wav",
+      "rpm": 1267,
+      "load": "on",
+      "_src": "3.27-4.52s",
+      "_len": "1.14s"
+    },
+    {
+      "file": "on_1680.wav",
+      "rpm": 1678,
+      "load": "on",
+      "_src": "4.60-4.98s",
+      "_len": "0.79s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 2200,
+  "synthFx": true
+}

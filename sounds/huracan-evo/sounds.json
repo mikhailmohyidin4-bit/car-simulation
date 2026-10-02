@@ -1,0 +1,38 @@
+{
+  "source": "Extracted from LAMBORGHINI_HURACAN_EVO.mp3",
+  "loops": [
+    {
+      "file": "idle_1190.wav",
+      "rpm": 1189,
+      "load": "both",
+      "_src": "50.20-54.80s",
+      "_len": "4.34s"
+    },
+    {
+      "file": "on_1640.wav",
+      "rpm": 1643,
+      "load": "on",
+      "_src": "71.50-71.62s",
+      "_len": "0.73s"
+    },
+    {
+      "file": "on_2220.wav",
+      "rpm": 2223,
+      "load": "on",
+      "_src": "71.96-72.72s",
+      "_len": "0.76s"
+    },
+    {
+      "file": "on_2780.wav",
+      "rpm": 2781,
+      "load": "on",
+      "_src": "71.84-71.95s",
+      "_len": "0.78s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 3600,
+  "synthFx": true
+}

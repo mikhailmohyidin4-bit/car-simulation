@@ -1,0 +1,52 @@
+{
+  "source": "Extracted from Lamborghini_Huracan_STO.mp3",
+  "loops": [
+    {
+      "file": "idle_960.wav",
+      "rpm": 960,
+      "load": "both",
+      "_src": "3.00-5.15s",
+      "_len": "1.88s"
+    },
+    {
+      "file": "on_1270.wav",
+      "rpm": 1270,
+      "load": "on",
+      "_src": "57.39-57.85s",
+      "_len": "0.76s"
+    },
+    {
+      "file": "on_1430.wav",
+      "rpm": 1430,
+      "load": "on",
+      "_src": "62.88-63.70s",
+      "_len": "0.76s"
+    },
+    {
+      "file": "on_1640.wav",
+      "rpm": 1641,
+      "load": "on",
+      "_src": "58.97-59.42s",
+      "_len": "0.73s"
+    },
+    {
+      "file": "on_1810.wav",
+      "rpm": 1808,
+      "load": "on",
+      "_src": "63.82-64.41s",
+      "_len": "0.80s"
+    },
+    {
+      "file": "on_2370.wav",
+      "rpm": 2366,
+      "load": "on",
+      "_src": "64.68-65.06s",
+      "_len": "0.76s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 3100,
+  "synthFx": true
+}

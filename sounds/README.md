@@ -15,7 +15,7 @@ Put audio files in a folder named after the car id. The app then uses your recor
 
 ## Included recordings
 
-Five cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
+All eight cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
 
 | Car | What the recording contains | Recorded up to | Synth above |
 |---|---|---|---|
@@ -24,6 +24,9 @@ Five cars ship with loops extracted from the owner's recordings. The **Recorded 
 | 812 Superfast | Cold start flare, idle, short acceleration | ~2700 rpm | 3500 rpm |
 | F8 Tributo | Cold start, idle, small blips (off-throttle) | ~2200 rpm | 2800 rpm |
 | SF90 Stradale | Cold start, high cold idle (~1500 rpm), blips | ~2200 rpm | 2800 rpm |
+| Huracán EVO | Cold start, idle (~1200 rpm), pull-away | ~2800 rpm | 3600 rpm |
+| Huracán STO | Cold start, idle (~960 rpm), revs | ~2400 rpm | 3100 rpm |
+| Revuelto | Cold start, high idle (~1100 rpm), short rev | ~1700 rpm | 2200 rpm |
 
 ### How the loops were made
 
