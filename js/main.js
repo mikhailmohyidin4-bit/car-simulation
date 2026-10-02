@@ -41,6 +41,7 @@
     car = c;
     const cal = calibrate(car);
     veh = new Vehicle(car, cal);
+    resetCosmetics();
     renderButtons();
     odoBase = lsGet('carsim.odo.' + car.id, 0);
     tripBase = lsGet('carsim.trip.' + car.id, 0);
@@ -139,6 +140,7 @@
     $('brkBar').style.width = (inp.brake * 100).toFixed(0) + '%';
     $('devName').textContent = '🎮 ' + inp.device;
 
+    updateCosmetics(dt, inp);
     const T = veh.timer;
     Dashboards.draw(ctx, {
       rpm: veh.rpm, kmh: veh.v * 3.6, v: veh.v, gear: veh.gear, auto: veh.auto, modeIdx: veh.modeIdx,
@@ -147,10 +149,27 @@
       t100: T.t100 != null ? T.t100 : T.last100, t200: T.t200 != null ? T.t200 : T.last200,
       maxKmh: veh.maxV * 3.6, oilT: veh.oilT, waterT: veh.waterT, accel: veh.accel,
       battery: veh.battery, eForce: veh.eForce, wheelForce: veh.wheelForce, boost: veh.boost,
+      fuel: cos.fuel, rangeKm: cos.fuel * 520, avgKmh: cos.moveT > 1 ? (veh.dist / cos.moveT) * 3.6 : 0,
+      brakeT: cos.brakeT, tireT: cos.tireT, tirePsi: cos.tireT.map((t, i) => (i < 2 ? 2.2 : 2.1) + (t - 30) * 0.006),
+      ambient: cos.ambient, regen: cos.regen,
     }, car);
 
     saveT += dt;
     if (saveT > 5) { saveT = 0; persistOdo(); }
+  }
+
+  // cosmetic values for the clusters: fuel, brake / tyre temperatures, average speed
+  const cos = { fuel: 0.72, brakeT: 40, tireT: [30, 29, 31, 29], moveT: 0, ambient: 31.5, regen: 0 };
+  function resetCosmetics() { Object.assign(cos, { fuel: 0.72, brakeT: 40, tireT: [30, 29, 31, 29], moveT: 0, regen: 0 }); }
+  function updateCosmetics(dt, inp) {
+    const m = car.massKg, p = Math.max(0, veh.wheelForce * veh.v);
+    cos.fuel = Math.max(0, cos.fuel - (p * dt) / 8e8 - (veh.running ? dt * 2e-6 : 0));
+    const brakeHeat = inp.brake * m * veh.cal.brakeDecel * veh.v * dt;
+    cos.brakeT += brakeHeat / 4000 - (cos.brakeT - cos.ambient) * dt * 0.015 * (1 + veh.v / 25);
+    const tgt = 30 + Math.abs(veh.accel) * 3 + veh.v * 0.12;
+    cos.tireT = cos.tireT.map((t, i) => t + (tgt + (i % 2 ? -1 : 0) - t) * dt * 0.02);
+    if (veh.v > 0.5) cos.moveT += dt;
+    cos.regen += ((inp.brake > 0.05 && veh.v > 1 ? inp.brake : 0) - cos.regen) * Math.min(1, dt * 8);
   }
 
   function resetTrip() {

@@ -352,7 +352,10 @@
   const STYLES = { lambo: drawLambo, 'ferrari-classic': drawFerrariClassic, 'ferrari-digital': drawFerrariDigital };
 
   window.Dashboards = {
-    W, H,
+    W, H, FONT, DIGI,
+    util: { clamp, font, text, hexPath, fmt, gearStr, roundRect, bar },
+    // car-specific clusters live in their own files and register here
+    register(name, fn) { STYLES[name] = fn; },
     draw(ctx, state, car) { (STYLES[car.dash.style] || drawLambo)(ctx, state, car); },
   };
 })();
