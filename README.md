@@ -58,6 +58,10 @@ Each firing pulse excites exhaust resonators tuned per car. On top of that the s
 - starter motor whine
 - hybrid e-motor whine
 
+### Using your own recordings
+
+You can replace the synth with recorded audio. Put MP3, WAV or OGG loops in `sounds/<car-id>/`, and the app pitch-shifts and crossfades them by rpm and throttle. See [`sounds/README.md`](sounds/README.md) for the file names and how to prepare the recordings. The **SOUND** tile on the drive screen shows whether a car is using the synth or your recordings.
+
 ## Controls
 
 | Action | Keyboard | DualSense / DS4 |

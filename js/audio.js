@@ -40,6 +40,7 @@
         this.bov = 0; this.bovDec = Math.exp(-1 / (sr * 0.25));
         this.wph = 0; this.eph = 0; this.sph = 0;
         this.starter = 0; this.master = 0;
+        this.eng = 1; this.engT = 1; this.fx = 1; this.starterOk = true; // eng = synth engine note level
         this.sm = 1 - Math.exp(-1 / (sr * 0.012));
         this.smL = 1 - Math.exp(-1 / (sr * 0.03));
       }
@@ -59,6 +60,7 @@
         else if (d.type === 'state') {
           this.rpmT = d.rpm; this.loadT = d.load; this.boost = d.boost; this.speed = d.speed;
           this.on = d.on; this.crank = d.crank; this.cut = d.cut; this.vol = d.vol;
+          this.engT = d.eng != null ? d.eng : 1; this.fx = d.fx != null ? d.fx : 1; this.starterOk = d.starter !== false;
         } else if (d.type === 'event') {
           if (d.name === 'crack') this.pop(d.amp);
           if (d.name === 'bov') this.bov = Math.max(this.bov, d.amp);
@@ -109,6 +111,7 @@
           this.rpm += (this.rpmT - this.rpm) * this.sm;
           this.load += (this.loadT - this.load) * this.smL;
           this.master += (masterT - this.master) * 0.0005;
+          this.eng += (this.engT - this.eng) * 0.0005;
 
           let s = 0;
           if (this.rpm > 30) {
@@ -136,11 +139,11 @@
           s = Math.tanh(s * drv) / dn;
           this.lp += (s - this.lp) * k1;
           this.lp2 += (this.lp - this.lp2) * k2;
-          let y = this.lp2;
+          let y = this.lp2 * this.eng;
 
           // pops / cracks
           if (this.popEnv > 0.001) {
-            const pe = this.popEnv * this.popAmp * c.crackGain;
+            const pe = this.popEnv * this.popAmp * c.crackGain * this.fx;
             y += Math.tanh((this.popRes[0].run(nz * pe) * 2.5 + this.popRes[1].run(nz * pe) * 1.2) * 1.5);
             this.popEnv *= this.popDec;
           }
@@ -149,7 +152,7 @@
           if (c.turbo) {
             const wf = 1800 + 5200 * this.boost * Math.min(1, this.rpm / 6500);
             this.wph += wf / sr; if (this.wph > 1) this.wph -= 1;
-            y += Math.sin(2 * Math.PI * this.wph) * c.turbo * this.boost * (0.3 + 0.7 * this.load);
+            y += Math.sin(2 * Math.PI * this.wph) * c.turbo * this.boost * (0.3 + 0.7 * this.load) * this.fx;
             if (this.bov > 0.001) { y += this.bovF.run(nz) * this.bov * 0.35; this.bov *= this.bovDec; }
           }
 
@@ -160,7 +163,7 @@
           }
 
           // starter motor
-          this.starter += ((this.crank ? 1 : 0) - this.starter) * 0.002;
+          this.starter += ((this.crank && this.starterOk ? 1 : 0) - this.starter) * 0.002;
           if (this.starter > 0.002) {
             this.sph += (170 + 25 * Math.sin(this.ph * 6.28)) / sr; if (this.sph > 1) this.sph -= 1;
             y += ((this.sph * 2 - 1) * 0.5 + this.mech.run(nz) * 0.4) * this.starter * 0.18;
@@ -178,7 +181,10 @@
   const SRC = synthSource.toString();
 
   class EngineAudio {
-    constructor() { this.ctx = null; this.node = null; this.synth = null; this.ready = false; this.volume = 0.8; }
+    constructor() {
+      this.ctx = null; this.node = null; this.synth = null; this.ready = false; this.volume = 0.8;
+      this.samples = null; this.useSamples = false; this.onSamples = null; // onSamples(count) after each car load
+    }
 
     async init() {
       if (this.ctx) { await this.initP; if (this.ctx.state !== 'running') this.ctx.resume(); return; }
@@ -216,6 +222,7 @@
         this.post = (m) => this.synth.msg(m);
       }
       this.node.connect(comp);
+      if (window.SampleEngine) this.samples = new SampleEngine(this.ctx, comp);
       this.ready = true;
       if (this.ctx.state !== 'running') this.ctx.resume();
     }
@@ -228,10 +235,31 @@
         noise: s.noise, lpBase: s.lpBase, lpRpm: s.lpRpm, lpLoad: s.lpLoad, pops: s.pops, crackGain: s.crack,
         turbo: s.turbo || 0, eWhine: s.eWhine || 0, bank: s.bank,
       } });
+      this.useSamples = false;
+      if (!this.samples) { if (this.onSamples) this.onSamples(0); return; }
+      this.samples.load(car).then((n) => {
+        this.useSamples = n > 0;
+        this.fxMix = n > 0 && this.samples.cfg.synthFx === false ? 0 : 1;
+        if (this.onSamples) this.onSamples(n);
+      });
     }
 
-    update(st) { if (this.ready) this.post(Object.assign({ type: 'state', vol: this.volume }, st)); }
-    event(name, amp) { if (this.ready) this.post({ type: 'event', name, amp }); }
+    update(st) {
+      if (!this.ready) return;
+      const smp = this.useSamples;
+      this.post(Object.assign({ type: 'state', vol: this.volume, eng: smp ? 0 : 1, fx: smp ? this.fxMix : 1,
+        starter: !(smp && this.samples.startup) }, st));
+      if (smp) this.samples.update(st, this.volume);
+    }
+
+    event(name, amp) {
+      if (!this.ready) return;
+      if (this.useSamples && name === 'crank') this.samples.playStartup();
+      if (this.useSamples && name === 'stop') this.samples.stopStartup();
+      this.post({ type: 'event', name, amp });
+    }
+
+    unloadSamples() { this.useSamples = false; if (this.samples) this.samples.unload(); }
     suspend() { if (this.ctx) this.ctx.suspend(); }
     resume() { if (this.ctx) this.ctx.resume(); }
   }

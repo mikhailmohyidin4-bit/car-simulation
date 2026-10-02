@@ -63,6 +63,7 @@ button.big.on { background: linear-gradient(180deg, #0f2a14, #061609); border-co
 .spec { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .spec b { display: block; font-size: 12px; color: var(--dim); letter-spacing: .12em; }
 .spec span { font-size: 18px; font-weight: 700; }
+.spec em { font-style: normal; }
 .spec i { font-style: normal; color: #6bff8a; font-size: 13px; margin-left: 6px; }
 .hint { color: var(--dim); font-size: 15px; line-height: 1.6; }
 .hint kbd { background: #1a1d23; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; color: var(--text); font-family: inherit; font-weight: 700; }

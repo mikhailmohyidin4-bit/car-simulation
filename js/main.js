@@ -41,7 +41,6 @@
     car = c;
     const cal = calibrate(car);
     veh = new Vehicle(car, cal);
-    audio.configure(car);
     renderButtons();
     odoBase = lsGet('carsim.odo.' + car.id, 0);
     tripBase = lsGet('carsim.trip.' + car.id, 0);
@@ -59,6 +58,7 @@
     cancelAnimationFrame(raf);
     if (veh) { veh.running = false; veh.rpm = 0; }
     audio.update({ rpm: 0, load: 0, boost: 0, speed: 0, on: false, crank: false, cut: false });
+    audio.unloadSamples();
     car = null; veh = null;
     $('drive').classList.remove('active'); $('garage').classList.add('active');
   }
@@ -82,6 +82,7 @@
       ['0-200 km/h', `${c.perf.t200} s<i>sim ${k.t200.toFixed(2)}</i>`],
       ['TOP SPEED', `${c.perf.vmax} km/h<i>sim ${k.vmax.toFixed(0)}</i>`],
       ['BRAKING 100-0', `${c.perf.brake100} m<i>sim ${k.brake100.toFixed(1)}</i>`],
+      ['SOUND', '<em id="sndSrc">Synth</em>'],
     ];
     $('specs').innerHTML = items.map(([a, b]) => `<div class="spec"><b>${a}</b><span>${b}</span></div>`).join('');
   }
@@ -121,7 +122,7 @@
       } else if (ev.type === 'bov') audio.event('bov', ev.data);
       else if (ev.type === 'catch') audio.event('crack', 0.25);
       else if (ev.type === 'deny') toast('Over-rev protection: downshift refused');
-      else if (ev.type === 'mode' || ev.type === 'stop' || ev.type === 'crank') renderButtons();
+      else if (ev.type === 'crank' || ev.type === 'stop') audio.event(ev.type);
     }
     if (veh.events.length) renderButtons();
     veh.events.length = 0;
@@ -182,6 +183,12 @@
     const t = $('toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800);
   }
+
+  audio.onSamples = (n) => {
+    const el = $('sndSrc');
+    if (el) el.textContent = n ? `Recorded (${n} loop${n > 1 ? 's' : ''})` : 'Synth';
+    if (n) toast(`🔊 Using your recorded sounds (${n} loop${n > 1 ? 's' : ''})`);
+  };
 
   // on-screen buttons (useful on touch / mouse)
   const ui = { thr: null };
