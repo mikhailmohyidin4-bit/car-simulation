@@ -42,6 +42,7 @@
     car = c;
     const cal = calibrate(car);
     veh = new Vehicle(car, cal);
+    if (car.option) veh.optIdx = Math.min(lsGet('carsim.opt.' + car.id, veh.optIdx), car.option.choices.length - 1);
     resetCosmetics();
     renderButtons();
     odoBase = lsGet('carsim.odo.' + car.id, 0);
@@ -93,7 +94,7 @@
   function renderHint() {
     const k = (a) => (input.keys[a] || []).map((c) => `<kbd>${keyName(c)}</kbd>`).join(' ') || '—';
     $('hint').innerHTML = `Keyboard: Engine ${k('engine')} · Gas ${k('throttle')} · Brake ${k('brake')} · Shift ${k('shiftDown')} / ${k('shiftUp')} ·
-      Auto/Manual ${k('trans')} · Mode ${k('mode')} · Reset trip ${k('trip')}<br>
+      Auto/Manual ${k('trans')} · Mode ${k('mode')} · Reset trip ${k('trip')} · Fuel/limiter ${k('option')}<br>
       DualSense / PS4: <kbd>R2</kbd> gas · <kbd>L2</kbd> brake · <kbd>R1</kbd>/<kbd>L1</kbd> shift · <kbd>Options</kbd> engine · <kbd>△</kbd> auto/manual · <kbd>□</kbd> mode.
       Wheels (PXN V9 etc.): open <b>Controls</b> and bind pedals + paddles.<br>
       Launch control: hold brake + full throttle, then release the brake. Pulling a paddle in Auto switches to Manual.`;
@@ -112,6 +113,7 @@
     if (p.trans) veh.setAuto(!veh.auto);
     if (p.mode) { veh.cycleMode(); toast('Mode: ' + car.dash.modes[veh.modeIdx].name); }
     if (p.trip) resetTrip();
+    if (p.option) changeOption();
     if (ui.thr != null) { inp.throttle = Math.max(inp.throttle, ui.thr); }
 
     acc += dt;
@@ -210,6 +212,16 @@
     $('engineBtn').classList.toggle('on', on);
     $('transBtn').textContent = veh.auto ? 'AUTO' : 'MANUAL';
     $('modeBtn').textContent = 'MODE: ' + car.dash.modes[veh.modeIdx].name;
+    $('optBtn').hidden = !car.option;
+    if (car.option) $('optBtn').textContent = car.option.label + ': ' + veh.opt.name;
+  }
+
+  function changeOption() {
+    if (!car.option) return;
+    veh.cycleOption();
+    lsSet('carsim.opt.' + car.id, veh.optIdx);
+    renderButtons();
+    toast(car.option.label + ': ' + veh.opt.name);
   }
 
   function resize() {
@@ -242,6 +254,7 @@
   $('upBtn').onclick = () => { veh.shift(1, true); renderButtons(); };
   $('downBtn').onclick = () => { veh.shift(-1, true); renderButtons(); };
   $('tripBtn').onclick = resetTrip;
+  $('optBtn').onclick = changeOption;
   $('vol').oninput = (e) => { audio.volume = parseFloat(e.target.value); };
   document.querySelectorAll('button').forEach((b) => b.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') e.preventDefault(); }));
 

@@ -37,9 +37,21 @@ Double-click `start.command` (macOS), or run `./start.command`. It uses the Pyth
 | Ferrari SF90 Stradale | 4.0 V8 TT + 3 e-motors, 1000 CV | 8-spd F1 DCT | 2.5 s | 6.7 s | 340 | 29.5 m |
 | Ferrari 296 GTB | 3.0 V6 TT + e-motor, 830 CV | 8-spd F1 DCT | 2.9 s | 7.3 s | 330 | 30 m |
 | BMW M5 Competition | 4.4 V8 TT, 625 PS, AWD | 8-spd M Steptronic | 3.3 s | 10.8 s | 305 (limited) | 33.5 m |
-| Koenigsegg Jesko Attack | 5.0 V8 TT, 1280 hp (95 RON) | 9-spd LST skip-shift | 2.5 s* | 5.5 s* | 350* | 31 m* |
+| Koenigsegg Jesko Attack | 5.0 V8 TT, 1280 hp (95 RON) / 1600 hp (E85) | 9-spd LST skip-shift | 2.5 s* | 5.5 s* (95) / ~5.0 s (E85) | 350* | 31 m* |
+| Koenigsegg Jesko Absolut | 5.0 V8 TT, 1600 hp (E85) / 1280 hp (95 RON) | 9-spd LST skip-shift | 2.5 s* | 5.3 s* | 500* (theoretical) | 32 m* |
 
-\* Koenigsegg hasn't published these for the Jesko Attack, so they are estimates.
+\* Estimates: Koenigsegg hasn't published these. The Absolut's 500+ km/h is Koenigsegg's own simulated claim and has not been run officially. The Attack is the high-downforce track version, so its top speed is much lower.
+
+### Car options
+
+Some cars have an option you can switch with the **option button** or the `O` key. The choice is remembered per car.
+
+| Car | Option | Choices |
+|---|---|---|
+| Jesko Attack / Absolut | Fuel | 95 RON (1280 hp) or E85 (1600 hp) |
+| BMW M5 Competition | Speed limiter | 250 km/h (standard) or 305 km/h (M Driver's Package) |
+
+The official figures in the table are for each car's default choice. For E85, the torque curve is scaled up to 1600 hp; the exact E85 torque curve isn't published.
 
 To add a car, add an entry to `js/cars.js`. The sim calibrates itself to the figures in that entry.
 
@@ -88,6 +100,7 @@ You can replace the synth with recorded audio. Put MP3, WAV or OGG loops in `sou
 | Auto / Manual | `M` | △ |
 | Drive mode (ANIMA / Manettino) | `N` | □ |
 | Reset trip | `T` | Create / Share |
+| Fuel / limiter option | `O` | — (bind in Controls) |
 
 Pulling a shift paddle while in Auto switches to Manual, as in the real cars. In Manual the gearbox protects against over-rev and drops gears for you as you roll to a stop.
 

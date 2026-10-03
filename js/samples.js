@@ -76,7 +76,7 @@
     // Returns the number of loops loaded (0 = no samples for this car, use the synth).
     async load(car) {
       this.unload();
-      const gen = this.gen, base = `sounds/${car.id}/`;
+      const gen = this.gen, base = `sounds/${car.soundDir || car.id}/`;
       const e = car.engine;
       let cfg = await fetchJson(base + 'sounds.json');
       if (!cfg) {

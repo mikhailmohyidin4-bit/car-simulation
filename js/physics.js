@@ -49,6 +49,8 @@
       this.car = prepareCar(car);
       this.cal = cal || { mu: 1.2, eff: 0.85, CdA: 0.8, brakeDecel: 10 };
       this.silent = false;
+      // car variant option (fuel / speed limiter); calibration uses the default choice
+      this.optIdx = car.option ? car.option.default || 0 : 0;
       this.reset();
     }
 
@@ -74,9 +76,17 @@
 
     emit(type, data) { if (!this.silent) this.events.push({ type, data }); }
 
+    get opt() { return this.car.option ? this.car.option.choices[this.optIdx] : null; }
+    get speedLimit() { const o = this.opt; return o && o.speedLimit != null ? o.speedLimit : this.car.speedLimit; }
+    cycleOption() {
+      if (!this.car.option) return;
+      this.optIdx = (this.optIdx + 1) % this.car.option.choices.length;
+      this.emit('mode');
+    }
+
     tq(rpm) {
-      const e = this.car.engine;
-      let t = interp(e.curve, rpm) * e.tScale;
+      const e = this.car.engine, o = this.opt;
+      let t = interp(e.curve, rpm) * e.tScale * (o && o.powerKw ? o.powerKw / e.powerKw : 1);
       if (e.aspiration === 'TT') t *= 0.45 + 0.55 * this.boost;
       return t;
     }
@@ -221,7 +231,7 @@
       this.fDriveS += (fEng + fE - this.fDriveS) * Math.min(1, dt / 0.04);
       let fDrive = clamp(this.fDriveS, -fMax, fMax);
       // electronic top-speed limiter (e.g. BMW M5: 250 km/h, 305 with M Driver's Package)
-      if (car.speedLimit && fDrive > 0) fDrive *= clamp((car.speedLimit + 0.5 - this.v * 3.6) / 1.5, 0, 1);
+      if (this.speedLimit && fDrive > 0) fDrive *= clamp((this.speedLimit + 0.5 - this.v * 3.6) / 1.5, 0, 1);
       this.wheelForce = fDrive;
 
       // --- brakes & resistances ---

@@ -17,12 +17,13 @@
     { id: 'trans', label: 'Auto / Manual' },
     { id: 'mode', label: 'Drive mode' },
     { id: 'trip', label: 'Reset trip' },
+    { id: 'option', label: 'Car option (fuel / limiter)' },
   ];
 
   const KEY_DEFAULTS = {
     throttle: ['ArrowUp', 'KeyW'], brake: ['ArrowDown', 'KeyS'],
     shiftUp: ['KeyE', 'ShiftRight'], shiftDown: ['KeyQ', 'ControlRight'],
-    engine: ['KeyI', 'Enter'], trans: ['KeyM'], mode: ['KeyN'], trip: ['KeyT'],
+    engine: ['KeyI', 'Enter'], trans: ['KeyM'], mode: ['KeyN'], trip: ['KeyT'], option: ['KeyO'],
   };
 
   // Standard mapping = DualSense / DualShock 4 / Xbox in Chrome, Edge, Firefox
@@ -53,6 +54,8 @@
     constructor() {
       this.store = loadStore();
       this.keys = this.store.keys || JSON.parse(JSON.stringify(KEY_DEFAULTS));
+      // actions added in newer versions get their default keys
+      for (const k in KEY_DEFAULTS) if (!this.keys[k]) this.keys[k] = KEY_DEFAULTS[k].slice();
       this.pads = this.store.pads || {};
       this.down = new Set();
       this.tapped = new Set(); // keydowns since last poll, so quick taps are never missed

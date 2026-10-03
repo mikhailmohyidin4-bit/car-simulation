@@ -210,6 +210,7 @@ window.CARS = [
     // 305 km/h with the M Driver's Package (limited); aero top speed estimated slightly higher
     perf: { vmax: 305, vmaxAero: 315, t100: 3.3, t200: 10.8, brake100: 33.5 },
     speedLimit: 305,
+    option: { label: 'LIMITER', default: 1, choices: [{ name: '250 km/h', speedLimit: 250 }, { name: '305 km/h (M Driver\'s)', speedLimit: 305 }] },
     dash: { style: 'bmw-m', dialMax: 8000, redline: 7200, speedoMax: 330, defaultMode: 1,
             modes: [{ name: 'COMFORT', aggr: 0.0, color: '#4fc3f7' }, { name: 'SPORT', aggr: 0.5, color: '#ff3b30' }, { name: 'SPORT+', aggr: 1.0, color: '#ff3b30' }] },
     // cross-plane V8: uneven bank pulses give the burble
@@ -233,8 +234,38 @@ window.CARS = [
     trans: { name: '9-speed LST multi-clutch (skip-shift)', gears: [3.100, 2.400, 1.920, 1.600, 1.350, 1.150, 0.980, 0.840, 0.710],
              shiftTime: 0.02, launchRpm: 3800, topGearRpm: 8000, skipShift: true },
     drive: 'RWD', dryKg: 1320, massKg: 1495, tireRadius: 0.353, tire: '325/30 ZR21', downforceKg: 1000,
+    // performance figures are for 95 RON; E85 scales the torque curve to 1600 hp
+    option: { label: 'FUEL', default: 0, choices: [{ name: '95 RON', powerKw: 954 }, { name: 'E85', powerKw: 1195 }] },
     // Koenigsegg has not published 0-100 / 0-200 / braking for the Attack: these are estimates
     perf: { vmax: 350, t100: 2.5, t200: 5.5, brake100: 31.0, est: true },
+    dash: { style: 'koenigsegg', dialMax: 9000, redline: 8500, defaultMode: 1,
+            modes: [{ name: 'WET', aggr: 0.0, color: '#4fc3f7' }, { name: 'NORMAL', aggr: 0.3, color: '#9be22d' },
+                    { name: 'SPORT', aggr: 0.7, color: '#b388ff' }, { name: 'TRACK', aggr: 1.0, color: '#ff4081' }] },
+    sound: { res: [[120, 2.0, 1.0], [480, 2.8, 0.8], [1900, 3.6, 0.45]], direct: 0.6, drive: 2.4,
+             noise: 0.3, lpBase: 1300, lpRpm: 0.5, lpLoad: 2000, pops: 0.12, crack: 0.9, turbo: 0.05,
+             bank: [1, 0.96, 1.03, 0.97, 1.0, 0.95, 1.04, 0.98] },
+  },
+  {
+    id: 'jesko-absolut',
+    brand: 'Koenigsegg',
+    model: 'Jesko Absolut',
+    year: 2022,
+    color: '#c0c6cc',
+    soundDir: 'jesko-attack', // same engine; reuses the Attack recordings
+    engine: {
+      // calibrated on E85 (1600 hp), the fuel Koenigsegg's top-speed claim is based on
+      layout: 'V8 twin-turbo flat-plane', cylinders: 8, displacement: 5.0, aspiration: 'TT',
+      idle: 870, limiter: 8500, powerKw: 1195, powerRpm: 7800, torqueNm: 1500, torqueRpm: 5100,
+      curve: [[700, 420], [1000, 520], [2000, 860], [3000, 1180], [4000, 1400], [5100, 1500], [6000, 1490],
+              [7000, 1420], [7800, 1463], [8200, 1350], [8500, 1250], [8700, 1150]],
+    },
+    trans: { name: '9-speed LST multi-clutch (skip-shift)', gears: [3.100, 2.400, 1.920, 1.600, 1.350, 1.150, 0.980, 0.840, 0.710],
+             shiftTime: 0.02, launchRpm: 3800, topGearRpm: 8100, skipShift: true },
+    // low-drag body (Cd 0.278), ~150 kg downforce; lighter than the Attack
+    drive: 'RWD', dryKg: 1290, massKg: 1465, tireRadius: 0.353, tire: '325/30 ZR21', downforceKg: 150,
+    option: { label: 'FUEL', default: 1, choices: [{ name: '95 RON', powerKw: 954 }, { name: 'E85', powerKw: 1195 }] },
+    // 500+ km/h is Koenigsegg's theoretical (simulated) claim, never run officially; the rest are estimates
+    perf: { vmax: 500, t100: 2.5, t200: 5.3, brake100: 32.0, est: true },
     dash: { style: 'koenigsegg', dialMax: 9000, redline: 8500, defaultMode: 1,
             modes: [{ name: 'WET', aggr: 0.0, color: '#4fc3f7' }, { name: 'NORMAL', aggr: 0.3, color: '#9be22d' },
                     { name: 'SPORT', aggr: 0.7, color: '#b388ff' }, { name: 'TRACK', aggr: 1.0, color: '#ff4081' }] },
