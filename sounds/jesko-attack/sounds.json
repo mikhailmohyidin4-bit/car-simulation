@@ -1,0 +1,59 @@
+{
+  "source": "Extracted from the owner's Jesko Attack recording",
+  "loops": [
+    {
+      "file": "idle_870.wav",
+      "rpm": 866,
+      "load": "both",
+      "_src": "20.00-33.00s",
+      "_len": "12.74s"
+    },
+    {
+      "file": "both_1470.wav",
+      "rpm": 1475,
+      "load": "both",
+      "_src": "79.00-88.00s",
+      "_len": "8.87s"
+    },
+    {
+      "file": "on_2460.wav",
+      "rpm": 2461,
+      "load": "on",
+      "_src": "1.58-1.79s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "on_3070.wav",
+      "rpm": 3073,
+      "load": "on",
+      "_src": "1.85-2.21s",
+      "_len": "0.78s"
+    },
+    {
+      "file": "on_3940.wav",
+      "rpm": 3938,
+      "load": "on",
+      "_src": "2.43-3.08s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_4890.wav",
+      "rpm": 4892,
+      "load": "on",
+      "_src": "3.32-3.89s",
+      "_len": "0.79s"
+    },
+    {
+      "file": "on_5910.wav",
+      "rpm": 5911,
+      "load": "on",
+      "_src": "55.35-56.26s",
+      "_len": "0.89s"
+    }
+  ],
+  "startup": "startup.mp3",
+  "startupVolume": 0.8,
+  "volume": 1.0,
+  "synthAbove": 7700,
+  "synthFx": true
+}

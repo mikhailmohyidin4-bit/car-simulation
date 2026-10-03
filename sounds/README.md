@@ -13,10 +13,11 @@ Put audio files in a folder named after the car id. The app then uses your recor
 | Ferrari SF90 Stradale | `sounds/sf90-stradale/` |
 | Ferrari 296 GTB | `sounds/296-gtb/` |
 | BMW M5 Competition | `sounds/m5-competition/` |
+| Koenigsegg Jesko Attack | `sounds/jesko-attack/` |
 
 ## Included recordings
 
-All nine cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
+All ten cars ship with loops extracted from the owner's recordings. The **Recorded up to** column is the highest loop rpm.
 
 | Car | What the recording contains | Recorded up to | Synth above |
 |---|---|---|---|
@@ -29,6 +30,7 @@ All nine cars ship with loops extracted from the owner's recordings. The **Recor
 | Huracán STO | Cold start, idle (~960 rpm), revs | ~2400 rpm | 3100 rpm |
 | Revuelto | Cold start, high idle (~1100 rpm), short rev | ~1700 rpm | 2200 rpm |
 | M5 Competition | Cold start, cold idle (~1390 rpm), warm idle (~790 rpm), blips | ~3300 rpm | 4200 rpm |
+| Jesko Attack | Start-up, idle, two full-throttle pulls | ~5900 rpm | 7700 rpm |
 
 ### How the loops were made
 
@@ -36,7 +38,7 @@ All nine cars ship with loops extracted from the owner's recordings. The **Recor
 2. Short slices of the free revs were time-warped so their pitch is constant.
 3. Each slice was rebuilt into a ~0.8 s seamless loop by stringing together randomly chosen whole engine cycles.
 
-Above the highest recorded rpm, the sound crossfades to the synth (`synthAbove`) instead of pitch-shifting a loop too far.
+Loops are blended with overlapping, power-normalised weights in log-rpm, so two or three recordings play at once and there are no hard switches. Above `synthAbove`, the sound hands over to the synth over a wide band instead of pitch-shifting a loop too far.
 
 ### Adjusting
 

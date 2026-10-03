@@ -94,3 +94,8 @@ pre#raw { background: #0a0b0d; border: 1px solid var(--line); padding: 10px; bor
 }
 
 .fileWarn { background: #3a2a00; border-bottom: 1px solid #ffc400; color: #ffe08a; padding: 10px 16px; text-align: center; font-weight: 600; }
+.perf { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.perf div { background: linear-gradient(180deg, #16191f, #0e1014); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.perf b { display: block; font-size: 12px; color: var(--accent); letter-spacing: .12em; }
+.perf span { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card .est { color: var(--dim); font-size: 12px; margin-top: 8px; }

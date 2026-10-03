@@ -26,7 +26,8 @@
       el.innerHTML = `<div class="brand">${c.brand.toUpperCase()}</div><div class="model">${c.model}</div>
         <div class="eng">${c.engine.displacement}L ${c.engine.layout} · ${c.drive}</div>
         <dl><dt>POWER</dt><dd>${hp} CV</dd><dt>TOP SPEED</dt><dd>${c.perf.vmax} km/h</dd>
-        <dt>0-100</dt><dd>${c.perf.t100} s</dd><dt>0-200</dt><dd>${c.perf.t200} s</dd></dl>`;
+        <dt>0-100</dt><dd>${c.perf.t100} s${c.perf.est ? '*' : ''}</dd><dt>0-200</dt><dd>${c.perf.t200} s${c.perf.est ? '*' : ''}</dd></dl>
+        ${c.perf.est ? '<div class="est">* estimate, not published by the maker</div>' : ''}`;
       el.onclick = () => selectCar(c);
       $('carGrid').appendChild(el);
     });
@@ -79,9 +80,9 @@
       ['GEARBOX', c.trans.name],
       ['REDLINE', `${c.engine.limiter} rpm`],
       ['MASS', `${c.dryKg} kg dry`],
-      ['0-100 km/h', `${c.perf.t100} s<i>sim ${k.t100.toFixed(2)}</i>`],
-      ['0-200 km/h', `${c.perf.t200} s<i>sim ${k.t200.toFixed(2)}</i>`],
-      ['TOP SPEED', `${c.perf.vmax} km/h<i>sim ${k.vmax.toFixed(0)}</i>`],
+      ['0-100 km/h' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.t100} s<i>sim ${k.t100.toFixed(2)}</i>`],
+      ['0-200 km/h' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.t200} s<i>sim ${k.t200.toFixed(2)}</i>`],
+      ['TOP SPEED' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.vmax} km/h<i>sim ${k.vmax.toFixed(0)}</i>`],
       ['BRAKING 100-0', `${c.perf.brake100} m<i>sim ${k.brake100.toFixed(1)}</i>`],
       ['SOUND', '<em id="sndSrc">Synth</em>'],
     ];
@@ -137,6 +138,7 @@
     audio.update({ rpm: veh.rpm, load, boost: veh.boost, speed: veh.v, on: veh.running, crank: veh.cranking > 0, cut: veh.cut });
 
     $('thrBar').style.width = (inp.throttle * 100).toFixed(0) + '%';
+    renderPerf();
     $('brkBar').style.width = (inp.brake * 100).toFixed(0) + '%';
     $('devName').textContent = '🎮 ' + inp.device;
 
@@ -173,10 +175,31 @@
     cos.regen += ((inp.brake > 0.05 && veh.v > 1 ? inp.brake : 0) - cos.regen) * Math.min(1, dt * 8);
   }
 
+  // live performance meter, the same for every car
+  let perfT = 0;
+  function renderPerf() {
+    if (performance.now() - perfT < 120) return;
+    perfT = performance.now();
+    const T = veh.timer, f = (x, d, u) => (x == null ? '--' : x.toFixed(d) + u);
+    const kw = Math.max(0, veh.wheelForce * veh.v / 1000);
+    const cells = [
+      ['0-100', f(T.t100 != null ? T.t100 : T.last100, 2, ' s')],
+      ['100-200', f(T.last100200, 2, ' s')],
+      ['0-200', f(T.t200 != null ? T.t200 : T.last200, 2, ' s')],
+      ['¼ MILE', f(T.tQm != null ? T.tQm : T.lastQm, 2, ' s')],
+      ['TRAP', f(T.vQm != null ? T.vQm : T.lastTrap, 0, ' km/h')],
+      ['PEAK G', f(T.lastPeakG || null, 2, ' g')],
+      ['G NOW', (veh.accel / 9.81).toFixed(2) + ' g'],
+      ['WHEEL kW', Math.round(kw) + ' kW'],
+    ];
+    $('perf').innerHTML = cells.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('');
+  }
+
   function resetTrip() {
     tripBase = -veh.dist / 1000;
     lsSet('carsim.trip.' + car.id, 0);
-    veh.maxV = 0; veh.timer.last100 = null; veh.timer.last200 = null;
+    veh.maxV = 0;
+    Object.assign(veh.timer, { last100: null, last200: null, last100200: null, lastQm: null, lastTrap: null, lastPeakG: 0 });
     toast('Trip reset');
   }
 

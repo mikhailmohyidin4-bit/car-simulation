@@ -41,8 +41,8 @@
         this.wph = 0; this.eph = 0; this.sph = 0;
         this.starter = 0; this.master = 0;
         this.eng = 1; this.engT = 1; this.fx = 1; this.starterOk = true; // eng = synth engine note level
-        this.sm = 1 - Math.exp(-1 / (sr * 0.012));
-        this.smL = 1 - Math.exp(-1 / (sr * 0.03));
+        this.sm = 1 - Math.exp(-1 / (sr * 0.02));
+        this.smL = 1 - Math.exp(-1 / (sr * 0.045));
       }
 
       configure(c) {
@@ -200,6 +200,15 @@
       comp.attack.value = 0.003; comp.release.value = 0.15;
       this.out = this.ctx.createGain(); this.out.gain.value = 1;
       comp.connect(this.out); this.out.connect(this.ctx.destination);
+      // a little "air": short synthetic room reflection so dry loops/synth don't sound boxy
+      const ir = this.ctx.createBuffer(2, Math.round(this.ctx.sampleRate * 0.5), this.ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = ir.getChannelData(c);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * (i < 200 ? i / 200 : 1);
+      }
+      const verb = this.ctx.createConvolver(); verb.buffer = ir;
+      const wet = this.ctx.createGain(); wet.gain.value = 0.1;
+      comp.connect(verb); verb.connect(wet); wet.connect(this.out);
       try {
         const code = `const EngineSynth = (${SRC})();\n` +
           `class P extends AudioWorkletProcessor { constructor(){ super(); this.s = new EngineSynth(sampleRate); this.port.onmessage = (e) => this.s.msg(e.data); }` +

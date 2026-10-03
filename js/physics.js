@@ -58,8 +58,9 @@
       this.shiftT = 0; this.shiftDir = 0; this.shiftCool = 0;
       this.boost = 0; this.cut = false; this.clutchSlip = true;
       this.auto = true; this.modeIdx = this.car.dash.defaultMode || 0; this.time = 0; this.accel = 0;
-      this.launchCtl = false; this.wheelForce = 0; this.eForce = 0;
-      this.timer = { armed: true, start: 0, running: false, t100: null, t200: null, last100: null, last200: null };
+      this.launchCtl = false; this.wheelForce = 0; this.eForce = 0; this.thrS = 0; this.fDriveS = 0;
+      this.timer = { armed: true, start: 0, d0: 0, running: false, t100: null, t200: null, last100: null, last200: null,
+        tQm: null, vQm: null, lastQm: null, lastTrap: null, last100200: null, peakG: 0, lastPeakG: 0 };
       this.maxV = 0;
       this.oilT = 30; this.waterT = 30;
       this.battery = 0.72;
@@ -101,6 +102,7 @@
       const tr = this.car.trans, n = tr.ratios.length, e = this.car.engine;
       const ng = this.gear + dir;
       if (ng < 0 || ng > n) return false;
+      dir = Math.sign(dir);
       if (dir < 0 && ng > 0) {
         const nr = (this.v / this.car.tireRadius) * tr.ratios[ng - 1] / RPM2RAD;
         if (nr > e.limiter - 50) { this.emit('deny'); return false; } // over-rev protection
@@ -157,9 +159,13 @@
       if (this.rpm >= e.limiter) { if (!this.cut) this.emit('limiter'); this.cut = true; }
       else if (this.rpm < e.limiter - 180) this.cut = false;
 
-      let thrEng = thr;
-      if (this.flare > 0 && this.running) { this.flare -= dt; thrEng = Math.max(thrEng, 0.32); }
-      if (shifting && this.shiftDir > 0) thrEng = 0;
+      let thrReq = thr;
+      if (this.flare > 0 && this.running) { this.flare -= dt; thrReq = Math.max(thrReq, 0.32); }
+      // drive-by-wire + intake filling: torque follows the pedal over a few tens of ms
+      this.thrS += (thrReq - this.thrS) * Math.min(1, dt / (thrReq > this.thrS ? 0.07 : 0.045));
+      let thrEng = this.thrS;
+      // upshift: torque dips smoothly while the clutches hand over instead of a hard cut
+      if (shifting && this.shiftDir > 0) thrEng *= 1 - 0.7 * Math.sin(Math.PI * clamp(1 - this.shiftT / tr.shiftTime, 0, 1));
       if (this.cut || !this.running) thrEng = 0;
 
       const ratio = this.gear > 0 ? tr.ratios[this.gear - 1] : 0;
@@ -208,8 +214,12 @@
       this.eForce = fE;
 
       // --- traction limit ---
-      const fMax = mu * m * G;
-      let fDrive = clamp(fEng + fE, -fMax, fMax);
+      // aero downforce adds grip with speed² (downforceKg quoted at 275 km/h)
+      const df = car.downforceKg ? car.downforceKg * G * Math.pow(this.v / (275 / 3.6), 2) : 0;
+      const fMax = mu * (m * G + Math.min(df, car.downforceKg ? car.downforceKg * G * 1.2 : 0));
+      // driveline compliance (half-shafts, tyre carcass) smooths torque steps
+      this.fDriveS += (fEng + fE - this.fDriveS) * Math.min(1, dt / 0.04);
+      let fDrive = clamp(this.fDriveS, -fMax, fMax);
       // electronic top-speed limiter (e.g. BMW M5: 250 km/h, 305 with M Driver's Package)
       if (car.speedLimit && fDrive > 0) fDrive *= clamp((car.speedLimit + 0.5 - this.v * 3.6) / 1.5, 0, 1);
       this.wheelForce = fDrive;
@@ -237,7 +247,15 @@
             let downRpm = lerp(e.idle + 300 + aggr * 1500, e.limiter * 0.5, thr);
             if (brk > 0.1) downRpm = Math.max(downRpm, lerp(e.idle + 900, e.limiter * 0.55, aggr));
             const next = this.rpm * tr.ratios[this.gear - 2] / tr.ratios[this.gear - 1];
-            if (this.rpm < downRpm && next < Math.min(e.limiter - 600, upRpm * 0.9)) this.shift(-1, false);
+            if (this.rpm < downRpm && next < Math.min(e.limiter - 600, upRpm * 0.9)) {
+              let to = this.gear - 1;
+              // skip-shift gearboxes (Koenigsegg LST) jump straight to the best lower gear
+              if (tr.skipShift) {
+                while (to > 1 && this.rpm * tr.ratios[to - 2] / tr.ratios[this.gear - 1] < Math.min(e.limiter - 600, upRpm * 0.9) &&
+                       this.rpm * tr.ratios[to - 1] / tr.ratios[this.gear - 1] < downRpm) to--;
+              }
+              this.shift(to - this.gear, false);
+            }
           }
         }
         if (this.v < 0.3 && this.gear > 1) this.gear = 1;
@@ -250,12 +268,15 @@
 
       // --- performance timer (0-100 / 0-200) ---
       const T = this.timer;
-      if (this.v < 0.2) { T.armed = true; T.running = false; T.t100 = null; T.t200 = null; }
-      else if (T.armed && !T.running) { T.running = true; T.armed = false; T.start = this.time - dt; }
+      if (this.v < 0.2) { T.armed = true; T.running = false; T.t100 = null; T.t200 = null; T.tQm = null; T.vQm = null; T.peakG = 0; }
+      else if (T.armed && !T.running) { T.running = true; T.armed = false; T.start = this.time - dt; T.d0 = this.dist; }
       if (T.running) {
         const el = this.time - T.start;
+        T.peakG = Math.max(T.peakG, a / G); T.lastPeakG = T.peakG;
         if (T.t100 == null && this.v >= 100 / 3.6) { T.t100 = el; T.last100 = el; }
-        if (T.t200 == null && this.v >= 200 / 3.6) { T.t200 = el; T.last200 = el; T.running = false; }
+        if (T.t200 == null && this.v >= 200 / 3.6) { T.t200 = el; T.last200 = el; T.last100200 = el - T.t100; }
+        if (T.tQm == null && this.dist - T.d0 >= 402.336) { T.tQm = el; T.vQm = this.v * 3.6; T.lastQm = el; T.lastTrap = T.vQm; }
+        if (T.t200 != null && T.tQm != null) T.running = false;
         if (brk > 0.3) T.running = false;
       }
 
@@ -285,7 +306,7 @@
 
   function runAccel(car, cal, maxT) {
     const veh = new Vehicle(car, cal);
-    veh.silent = true; veh.running = true; veh.gear = 1; veh.boost = 1; veh.modeIdx = car.dash.modes.length - 1;
+    veh.silent = true; veh.running = true; veh.gear = 1; veh.boost = 1; veh.modeIdx = car.dash.modes.length - 1; veh.thrS = 1; // launch control holds the throttle open
     veh.rpm = car.trans.launchRpm;
     let t = 0, t100 = null;
     while (t < maxT) {

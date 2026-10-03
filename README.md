@@ -37,6 +37,9 @@ Double-click `start.command` (macOS), or run `./start.command`. It uses the Pyth
 | Ferrari SF90 Stradale | 4.0 V8 TT + 3 e-motors, 1000 CV | 8-spd F1 DCT | 2.5 s | 6.7 s | 340 | 29.5 m |
 | Ferrari 296 GTB | 3.0 V6 TT + e-motor, 830 CV | 8-spd F1 DCT | 2.9 s | 7.3 s | 330 | 30 m |
 | BMW M5 Competition | 4.4 V8 TT, 625 PS, AWD | 8-spd M Steptronic | 3.3 s | 10.8 s | 305 (limited) | 33.5 m |
+| Koenigsegg Jesko Attack | 5.0 V8 TT, 1280 hp (95 RON) | 9-spd LST skip-shift | 2.5 s* | 5.5 s* | 350* | 31 m* |
+
+\* Koenigsegg hasn't published these for the Jesko Attack, so they are estimates.
 
 To add a car, add an entry to `js/cars.js`. The sim calibrates itself to the figures in that entry.
 
@@ -111,6 +114,7 @@ js/dashboards.js    canvas instrument clusters (Lambo / Ferrari classic / Ferrar
 js/dash-pro.js      car-specific clusters: Ferrari HMI (296 GTB / SF90), Ferrari analogue (F8 / 812), Huracán STO
 js/dash-lambo.js    car-specific clusters: Aventador SVJ, Huracán EVO (Strada/Sport + Corsa views), Revuelto
 js/dash-bmw.js      BMW M5 Competition Live Cockpit (M view, variable redline)
+js/dash-koenigsegg.js  Koenigsegg Jesko wheel-mounted screen
 js/main.js          app wiring, game loop, controls UI
 ```
 
