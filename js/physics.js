@@ -32,14 +32,16 @@
   function prepareCar(car) {
     if (car._prepared) return car;
     const e = car.engine, tr = car.trans;
-    let maxP = 0;
-    for (let r = e.idle; r <= e.limiter; r += 10) maxP = Math.max(maxP, interp(e.curve, r) * r * RPM2RAD);
-    e.tScale = (e.powerKw * 1000) / maxP;
+    if (!car.ev) {
+      let maxP = 0;
+      for (let r = e.idle; r <= e.limiter; r += 10) maxP = Math.max(maxP, interp(e.curve, r) * r * RPM2RAD);
+      e.tScale = (e.powerKw * 1000) / maxP;
+    }
     const vmax = (car.perf.vmaxAero || car.perf.vmax) / 3.6;
     const overall = (tr.topGearRpm * RPM2RAD * car.tireRadius) / vmax;
     tr.finalDrive = overall / tr.gears[tr.gears.length - 1];
     tr.ratios = tr.gears.map((g) => g * tr.finalDrive);
-    e.inertia = 0.22 + e.displacement * 0.03;
+    e.inertia = 0.22 + (e.displacement || 0) * 0.03;
         car._prepared = true;
     return car;
   }
@@ -60,12 +62,12 @@
       this.shiftT = 0; this.shiftDir = 0; this.shiftCool = 0;
       this.boost = 0; this.cut = false; this.clutchSlip = true;
       this.auto = true; this.modeIdx = this.car.dash.defaultMode || 0; this.time = 0; this.accel = 0;
-      this.launchCtl = false; this.wheelForce = 0; this.eForce = 0; this.thrS = 0; this.fDriveS = 0;
+      this.launchCtl = false; this.wheelForce = 0; this.eForce = 0; this.thrS = 0; this.fDriveS = 0; this.regenKw = 0;
       this.timer = { armed: true, start: 0, d0: 0, running: false, t100: null, t200: null, last100: null, last200: null,
         tQm: null, vQm: null, lastQm: null, lastTrap: null, last100200: null, peakG: 0, lastPeakG: 0 };
       this.maxV = 0;
       this.oilT = 30; this.waterT = 30;
-      this.battery = 0.72;
+      this.battery = this.car.ev ? 0.88 : 0.72;
       this.events = [];
     }
 
@@ -98,7 +100,7 @@
         this.running = false; this.cranking = 0; this.gear = 0; this.clutchSlip = true;
         this.emit('stop');
       } else {
-        this.cranking = 0.75 + Math.random() * 0.15; this.gear = 0;
+        this.cranking = this.car.ev ? 0.45 : 0.75 + Math.random() * 0.15; this.gear = 0;
         this.emit('crank');
       }
     }
@@ -107,7 +109,7 @@
     cycleMode() { this.modeIdx = (this.modeIdx + 1) % this.car.dash.modes.length; this.emit('mode'); }
 
     shift(dir, fromUser) {
-      if (!this.running) return false;
+      if (!this.running || this.car.ev) return false; // EV: single-speed, nothing to shift
       if (fromUser && this.auto) this.auto = false; // pulling a paddle switches to manual, like the real cars
       const tr = this.car.trans, n = tr.ratios.length, e = this.car.engine;
       const ng = this.gear + dir;
@@ -137,7 +139,7 @@
       // --- ignition ---
       if (this.cranking > 0) {
         this.cranking -= dt;
-        this.rpm = 200 + 40 * Math.sin(this.time * 25);
+        this.rpm = car.ev ? 0 : 200 + 40 * Math.sin(this.time * 25);
         if (this.cranking <= 0) {
           this.running = true; this.flare = 0.38; this.rpm = e.idle * 0.8; this.clutchSlip = true;
           this.emit('catch');
@@ -182,7 +184,26 @@
       const coupled = (this.v / r) * ratio / RPM2RAD;
       let fEng = 0;
 
-      if (this.gear > 0 && this.running && !lc) {
+      if (car.ev) {
+        // ---- electric: 4 motors, single fixed reduction, constant torque then constant power
+        const ev = car.ev, md = car.dash.modes[this.modeIdx] || {};
+        // battery/inverter power is not all available at low speed: it ramps from pLow to full by vFullKmh
+        const ramp = ev.pLow != null ? ev.pLow + (1 - ev.pLow) * clamp(this.v * 3.6 / ev.vFullKmh, 0, 1) : 1;
+        const P = e.powerKw * 1000 * (md.powerCap || 1) * eff * ramp;
+        this.gear = this.running ? 1 : 0; this.cut = false; this.clutchSlip = false;
+        this.rpm = coupled;
+        if (this.running && !lc) {
+          const fCap = P / (ev.baseKmh / 3.6);
+          fEng = thrEng * Math.min(fCap, P / Math.max(this.v, 0.5));
+          // lift-off regen (one-pedal feel), fades out at walking pace
+          if (thrEng < 0.03 && this.v > 1) fEng -= m * G * (md.regen != null ? md.regen : ev.regen) * Math.min(1, this.v / 5);
+        }
+        const kwh = ev.batteryKwh * 3.6e6;
+        const pOut = fEng * this.v, pBrakeRegen = brk * m * this.cal.brakeDecel * this.v * 0.6;
+        this.battery = clamp(this.battery - (pOut > 0 ? pOut / 0.92 : pOut * 0.75) * dt / kwh + pBrakeRegen * dt / kwh * 0.5, 0, 1);
+        this.regenKw = Math.max(0, -pOut + pBrakeRegen * 0.5) / 1000;
+        if (this.battery <= 0.01) fEng = Math.min(fEng, 0);
+      } else if (this.gear > 0 && this.running && !lc) {
         if (this.clutchSlip) {
           // pulling away: clutch slips while engine is held near the target rpm
           const target = lerp(e.idle, tr.launchRpm, Math.min(1, thr * 1.25));
@@ -246,7 +267,7 @@
       if (this.v > this.maxV) this.maxV = this.v;
 
       // --- automatic gearbox ---
-      if (this.auto && this.running && !lc) {
+      if (this.auto && this.running && !lc && !car.ev) {
         const aggr = this.modeAggr, n = tr.ratios.length;
         if (this.gear === 0 && thr > 0.05) this.gear = 1;
         if (this.gear > 0 && !shifting && this.shiftCool <= 0 && !this.clutchSlip) {
@@ -272,7 +293,7 @@
       }
 
       // manual mode still drops gears when rolling to a stop (as the real DCTs do)
-      if (!this.auto && this.running && this.gear > 1 && !shifting && coupled < e.idle * 1.05) {
+      if (!car.ev && !this.auto && this.running && this.gear > 1 && !shifting && coupled < e.idle * 1.05) {
         this.gear -= 1; this.shiftDir = -1; this.shiftT = tr.shiftTime; this.emit('shift', -1);
       }
 
@@ -304,6 +325,7 @@
     const e = car.engine, tr = car.trans, r = car.tireRadius;
     const vt = ((car.perf.vmaxAero || car.perf.vmax) / 3.6) * 1.004;
     let best = 0;
+    if (car.ev) return ((e.powerKw * 1000 * eff) / vt - CRR * car.massKg * G) / (0.5 * RHO * vt * vt);
     for (const ratio of tr.ratios) {
       const rpm = (vt / r) * ratio / RPM2RAD;
       if (rpm > e.limiter - 30) continue;
@@ -318,13 +340,16 @@
     const veh = new Vehicle(car, cal);
     veh.silent = true; veh.running = true; veh.gear = 1; veh.boost = 1; veh.modeIdx = car.dash.modes.length - 1; veh.thrS = 1; // launch control holds the throttle open
     veh.rpm = car.trans.launchRpm;
-    let t = 0, t100 = null;
+    // second calibration point: 0-200 normally, 0-300 when that is the published figure
+    const vCal = (car.perf.calKmh || 200) / 3.6;
+    let t = 0, t100 = null, t200 = null;
     while (t < maxT) {
       veh.step(DT, 1, 0); t += DT;
       if (t100 == null && veh.v >= 100 / 3.6) t100 = t;
-      if (veh.v >= 200 / 3.6) return { t100, t200: t };
+      if (t200 == null && veh.v >= 200 / 3.6) t200 = t;
+      if (veh.v >= vCal) return { t100, t200, tCal: t };
     }
-    return { t100: t100 == null ? 99 : t100, t200: 99 };
+    return { t100: t100 == null ? 99 : t100, t200: t200 == null ? 99 : t200, tCal: 99 };
   }
 
   function runTopSpeed(car, cal) {
@@ -361,7 +386,7 @@
     for (let i = 0; i < 13; i++) {
       const eff = (eLo + eHi) / 2;
       best = solveMu(eff);
-      if (best.t200 > p.t200) eLo = eff; else eHi = eff;
+      if (best.tCal > (p.calKmh ? p['t' + p.calKmh] : p.t200)) eLo = eff; else eHi = eff;
     }
     const cal = { mu: best.mu, eff: best.eff, CdA: best.CdA, brakeDecel: 10 };
     // brake decel so that the full 100-0 stop (incl. drag) matches the official distance
@@ -370,7 +395,7 @@
       cal.brakeDecel = (bLo + bHi) / 2;
       if (runBrake(car, cal) > p.brake100) bLo = cal.brakeDecel; else bHi = cal.brakeDecel;
     }
-    cal.check = { t100: best.t100, t200: best.t200, vmax: runTopSpeed(car, cal), brake100: runBrake(car, cal) };
+    cal.check = { t100: best.t100, t200: best.t200, tCal: best.tCal, vmax: runTopSpeed(car, cal), brake100: runBrake(car, cal) };
     cache[car.id] = cal;
     return cal;
   }

@@ -22,11 +22,11 @@
     CARS.filter((c) => brandFilter === 'All' || c.brand === brandFilter).forEach((c) => {
       const el = document.createElement('div');
       el.className = 'card'; el.style.setProperty('--c', c.color);
-      const hp = Math.round((c.engine.powerKw + (c.engine.electricKw || 0)) * 1.3596);
+      const hp = Math.round((c.engine.powerKw + (c.engine.electricKw || 0)) * (c.ev ? 1.341 : 1.3596));
       el.innerHTML = `<div class="brand">${c.brand.toUpperCase()}</div><div class="model">${c.model}</div>
-        <div class="eng">${c.engine.displacement}L ${c.engine.layout} · ${c.drive}</div>
-        <dl><dt>POWER</dt><dd>${hp} CV</dd><dt>TOP SPEED</dt><dd>${c.perf.vmax} km/h</dd>
-        <dt>0-100</dt><dd>${c.perf.t100} s${c.perf.est ? '*' : ''}</dd><dt>0-200</dt><dd>${c.perf.t200} s${c.perf.est ? '*' : ''}</dd></dl>
+        <div class="eng">${c.engine.displacement ? c.engine.displacement + "L " : ""}${c.engine.layout} · ${c.drive}</div>
+        <dl><dt>POWER</dt><dd>${hp} ${c.ev ? "hp" : "CV"}</dd><dt>TOP SPEED</dt><dd>${c.perf.vmax} km/h</dd>
+        <dt>0-100</dt><dd>${c.perf.t100} s${c.perf.est ? '*' : ''}</dd>${c.perf.calKmh ? `<dt>0-${c.perf.calKmh}</dt><dd>${c.perf['t' + c.perf.calKmh]} s</dd>` : `<dt>0-200</dt><dd>${c.perf.t200} s${c.perf.est ? '*' : ''}</dd>`}</dl>
         ${c.perf.est ? '<div class="est">* estimate, not published by the maker</div>' : ''}`;
       el.onclick = () => selectCar(c);
       $('carGrid').appendChild(el);
@@ -75,16 +75,19 @@
   function renderSpecs(cal) {
     const c = car, k = cal.check;
     const items = [
-      ['ENGINE', `${c.engine.displacement}L ${c.engine.layout}`],
-      ['POWER', `${Math.round(c.engine.powerKw * 1.3596)} CV @ ${c.engine.powerRpm}` + (c.engine.electricKw ? ` + ${Math.round(c.engine.electricKw * 1.3596)} CV e` : '')],
-      ['TORQUE', `${c.engine.torqueNm} Nm @ ${c.engine.torqueRpm}`],
+      ['ENGINE', (c.engine.displacement ? c.engine.displacement + "L " : "") + c.engine.layout],
+      c.ev ? ['POWER', `${c.engine.powerKw} kW · ${Math.round(c.engine.powerKw * 1.341)} hp`]
+        : ['POWER', `${Math.round(c.engine.powerKw * 1.3596)} CV @ ${c.engine.powerRpm}` + (c.engine.electricKw ? ` + ${Math.round(c.engine.electricKw * 1.3596)} CV e` : '')],
+      ['TORQUE', c.ev ? `${c.engine.torqueNm} Nm` : `${c.engine.torqueNm} Nm @ ${c.engine.torqueRpm}`],
       ['GEARBOX', c.trans.name],
-      ['REDLINE', `${c.engine.limiter} rpm`],
+      c.ev ? ['BATTERY', `${c.ev.batteryKwh} kWh`] : ['REDLINE', `${c.engine.limiter} rpm`],
       ['MASS', `${c.dryKg} kg dry`],
       ['0-100 km/h' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.t100} s<i>sim ${k.t100.toFixed(2)}</i>`],
-      ['0-200 km/h' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.t200} s<i>sim ${k.t200.toFixed(2)}</i>`],
+      c.perf.t200 != null ? ['0-200 km/h' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.t200} s<i>sim ${k.t200.toFixed(2)}</i>`]
+        : ['0-200 km/h', `not published<i>sim ${k.t200.toFixed(2)}</i>`],
+      ...(c.perf.calKmh ? [[`0-${c.perf.calKmh} km/h`, `${c.perf['t' + c.perf.calKmh]} s<i>sim ${k.tCal.toFixed(2)}</i>`]] : []),
       ['TOP SPEED' + (c.perf.est ? ' (EST.)' : ''), `${c.perf.vmax} km/h<i>sim ${k.vmax.toFixed(0)}</i>`],
-      ['BRAKING 100-0', `${c.perf.brake100} m<i>sim ${k.brake100.toFixed(1)}</i>`],
+      ['BRAKING 100-0' + (c.perf.estBrake ? ' (EST.)' : ''), `${c.perf.brake100} m<i>sim ${k.brake100.toFixed(1)}</i>`],
       ['SOUND', '<em id="sndSrc">Synth</em>'],
     ];
     $('specs').innerHTML = items.map(([a, b]) => `<div class="spec"><b>${a}</b><span>${b}</span></div>`).join('');
@@ -124,7 +127,7 @@
         if (ev.data > 0) audio.event('crack', 0.35 + 0.65 * veh.modeAggr * Math.min(1, inp.throttle + 0.2));
         else blip = 0.18;
       } else if (ev.type === 'bov') audio.event('bov', ev.data);
-      else if (ev.type === 'catch') audio.event('crack', 0.25);
+      else if (ev.type === 'catch') audio.event(car.ev ? 'chime' : 'crack', 0.25);
       else if (ev.type === 'deny') toast('Over-rev protection: downshift refused');
       else if (ev.type === 'crank' || ev.type === 'stop') audio.event(ev.type);
     }
@@ -155,7 +158,7 @@
       battery: veh.battery, eForce: veh.eForce, wheelForce: veh.wheelForce, boost: veh.boost,
       fuel: cos.fuel, rangeKm: cos.fuel * 520, avgKmh: cos.moveT > 1 ? (veh.dist / cos.moveT) * 3.6 : 0,
       brakeT: cos.brakeT, tireT: cos.tireT, tirePsi: cos.tireT.map((t, i) => (i < 2 ? 2.2 : 2.1) + (t - 30) * 0.006),
-      ambient: cos.ambient, regen: cos.regen, sessionT: cos.runT,
+      ambient: cos.ambient, regen: cos.regen, sessionT: cos.runT, regenKw: veh.regenKw, optName: veh.opt ? veh.opt.name : '',
     }, car);
 
     saveT += dt;
@@ -213,6 +216,7 @@
     $('transBtn').textContent = veh.auto ? 'AUTO' : 'MANUAL';
     $('modeBtn').textContent = 'MODE: ' + car.dash.modes[veh.modeIdx].name;
     $('optBtn').hidden = !car.option;
+    for (const id of ['transBtn', 'upBtn', 'downBtn']) $(id).hidden = !!car.ev;
     if (car.option) $('optBtn').textContent = car.option.label + ': ' + veh.opt.name;
   }
 

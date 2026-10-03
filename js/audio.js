@@ -47,6 +47,12 @@
 
       configure(c) {
         this.cfg = c;
+        if (c.ev) {
+          // electric: no firing pulses; motor/inverter whine, gear mesh, wind and tyre noise
+          this.e1 = this.e2 = this.e3 = 0; this.windLp = 0; this.windLp2 = 0; this.tyreLp = 0; this.chime = 0; this.chPh = 0;
+          this.windBp = new Biquad(this.sr, 700, 0.5);
+          return;
+        }
         const sr = this.sr;
         this.res = c.res.map(([f, q, g]) => ({ bq: new Biquad(sr, f, q), g }));
         this.popRes = [new Biquad(sr, 95, 1.5), new Biquad(sr, 1900, 1.2)];
@@ -64,6 +70,7 @@
         } else if (d.type === 'event') {
           if (d.name === 'crack') this.pop(d.amp);
           if (d.name === 'bov') this.bov = Math.max(this.bov, d.amp);
+          if (d.name === 'chime') this.chime = 1;
         }
       }
 
@@ -90,10 +97,53 @@
         if (this.cut && Math.random() < c.pops * 1.5) this.pop(0.3 + Math.random() * 0.5);
       }
 
+      evSample(c, hpk) {
+        const sr = this.sr, TWO = 2 * Math.PI, rps = this.rpm / 60, v = this.speed;
+        const live = this.on ? 1 : 0;
+        const nz = Math.random() * 2 - 1;
+        // motor: 4 pole pairs -> electrical order 4 and its harmonic, plus reduction gear mesh (23 teeth)
+        this.e1 += (rps * 4) / sr; this.e2 += (rps * 8) / sr; this.e3 += (rps * 23) / sr;
+        this.e1 %= 1; this.e2 %= 1; this.e3 %= 1;
+        const spin = Math.min(1, this.rpm / 1500);
+        const drive = 0.25 + 0.75 * Math.abs(this.load);
+        let y = (Math.sin(TWO * this.e1) * 0.6 + Math.sin(TWO * this.e2) * 0.4) * c.whine * drive * spin * live;
+        y += Math.sin(TWO * this.e3) * c.gear * spin * (0.4 + 0.6 * this.load) * live;
+        // inverter hiss under load
+        y += nz * 0.012 * this.load * live;
+        // wind: band-limited noise growing with speed^2, brightening with speed
+        const w = Math.min(1, (v / 70) * (v / 70));
+        const kW = 1 - Math.exp(-TWO * (300 + v * 25) / sr);
+        this.windLp += (nz - this.windLp) * kW; this.windLp2 += (this.windLp - this.windLp2) * kW;
+        y += this.windBp.run(this.windLp2) * c.wind * w * 4;
+        // tyre roar: low rumble proportional to speed
+        this.tyreLp += (nz - this.tyreLp) * 0.01;
+        y += this.tyreLp * Math.min(1, v / 40) * 1.2;
+        // READY chime: two rising tones
+        if (this.chime > 0) {
+          const f = this.chime > 0.5 ? 880 : 1320;
+          this.chPh = (this.chPh + f / sr) % 1;
+          y += Math.sin(TWO * this.chPh) * 0.12 * Math.sin(Math.PI * ((this.chime * 2) % 1));
+          this.chime = Math.max(0, this.chime - 1 / (sr * 0.36));
+        }
+        this.hp += (y - this.hp) * hpk;
+        const m = this.on || this.crank || v > 0.5 || this.chime > 0 ? this.vol : 0;
+        this.master += (m - this.master) * 0.0005;
+        return (y - this.hp) * this.master * 0.55;
+      }
+
       render(out) {
         const n = out.length;
         if (!this.cfg) { out.fill(0); return; }
         const c = this.cfg, sr = this.sr;
+        if (c.ev) {
+          const hpk = 1 - Math.exp(-2 * Math.PI * 28 / sr);
+          for (let i = 0; i < out.length; i++) {
+            this.rpm += (this.rpmT - this.rpm) * this.sm;
+            this.load += (this.loadT - this.load) * this.smL;
+            out[i] = this.evSample(c, hpk);
+          }
+          return;
+        }
         // per-block coefficients
         const cut = c.lpBase + this.rpm * c.lpRpm + this.load * c.lpLoad;
         const k1 = 1 - Math.exp(-2 * Math.PI * Math.min(cut, 12000) / sr);
@@ -239,6 +289,13 @@
     configure(car) {
       if (!this.ready) return;
       const s = car.sound;
+      if (s.ev) {
+        this.post({ type: 'config', cfg: { ev: true, whine: s.whine, gear: s.gear, wind: s.wind } });
+        this.useSamples = false;
+        if (this.samples) this.samples.unload();
+        if (this.onSamples) this.onSamples(0);
+        return;
+      }
       this.post({ type: 'config', cfg: {
         cyl: car.engine.cylinders, limiter: car.engine.limiter, res: s.res, direct: s.direct, drive: s.drive,
         noise: s.noise, lpBase: s.lpBase, lpRpm: s.lpRpm, lpLoad: s.lpLoad, pops: s.pops, crackGain: s.crack,

@@ -39,6 +39,7 @@ Double-click `start.command` (macOS), or run `./start.command`. It uses the Pyth
 | BMW M5 Competition | 4.4 V8 TT, 625 PS, AWD | 8-spd M Steptronic | 3.3 s | 10.8 s | 305 (limited) | 33.5 m |
 | Koenigsegg Jesko Attack | 5.0 V8 TT, 1280 hp (95 RON) / 1600 hp (E85) | 9-spd LST skip-shift | 2.5 s* | 5.5 s* (95) / ~5.0 s (E85) | 350* | 31 m* |
 | Koenigsegg Jesko Absolut | 5.0 V8 TT, 1600 hp (E85) / 1280 hp (95 RON) | 9-spd LST skip-shift | 2.5 s* | 5.3 s* | 500* (theoretical) | 32 m* |
+| Rimac Nevera R | 4 e-motors, 1571 kW / 2107 hp, 2340 Nm | Single-speed (per-motor reduction) | 1.72 s | 0-300: 7.89 s | 412 (431 with Rimac oversight) | 29 m* |
 
 \* Estimates: Koenigsegg hasn't published these. The Absolut's 500+ km/h is Koenigsegg's own simulated claim and has not been run officially. The Attack is the high-downforce track version, so its top speed is much lower.
 
@@ -50,6 +51,7 @@ Some cars have an option you can switch with the **option button** or the `O` ke
 |---|---|---|
 | Jesko Attack / Absolut | Fuel | 95 RON (1280 hp) or E85 (1600 hp) |
 | BMW M5 Competition | Speed limiter | 250 km/h (standard) or 305 km/h (M Driver's Package) |
+| Rimac Nevera R | Speed limiter | 412 km/h (standard) or 431 km/h (record run under Rimac oversight) |
 
 The official figures in the table are for each car's default choice. For E85, the torque curve is scaled up to 1600 hp; the exact E85 torque curve isn't published.
 
@@ -128,6 +130,7 @@ js/dash-pro.js      car-specific clusters: Ferrari HMI (296 GTB / SF90), Ferrari
 js/dash-lambo.js    car-specific clusters: Aventador SVJ, Huracán EVO (Strada/Sport + Corsa views), Revuelto
 js/dash-bmw.js      BMW M5 Competition Live Cockpit (M view, variable redline)
 js/dash-koenigsegg.js  Koenigsegg Jesko wheel-mounted screen
+js/dash-rimac.js    Rimac Nevera R driver display (EV: power/regen, battery, torque vectoring)
 js/main.js          app wiring, game loop, controls UI
 ```
 
@@ -137,3 +140,7 @@ js/main.js          app wiring, game loop, controls UI
 - **Gear ratios:** the spacing follows the real gearboxes. The final drives are derived values.
 - **Dashboards** are recreations inspired by the real clusters. They are not copies of the manufacturers' software.
 - **Engine sound** is modelled from each engine's real architecture: cylinder count, firing frequency, redline, induction and hybrid system. It is still a synthesis, not a recording, so it will not sound exactly like the real car.
+
+## Electric cars
+
+The Rimac Nevera R uses an EV model instead of the engine and gearbox: four motors with a single fixed reduction, launch traction limit, then a power ramp fitted to Rimac's record runs (0-100 1.72 s, 0-160.9 km/h 2.96 s, 0-300 7.89 s, ¼ mile 7.90 s). Rimac publishes no separate 0-200 figure, so it isn't a calibration target. Lifting off gives regen; braking also recharges the 108 kWh battery. Drive modes (Range, Cruise, Sport, Drift, Track) change available power, regen strength and the front/rear torque split shown on the display. The sound is a synthesised motor/gear whine with wind and tyre noise: the supplied video is mostly music and wind, so there was no clean motor sound to extract.

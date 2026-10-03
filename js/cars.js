@@ -95,7 +95,7 @@ window.CARS = [
     trans: { name: '8-speed transverse dual-clutch', gears: [3.110, 2.290, 1.840, 1.510, 1.260, 1.060, 0.890, 0.740],
              shiftTime: 0.04, launchRpm: 5000, topGearRpm: 8900 },
     drive: 'AWD', dryKg: 1772, massKg: 1950, tireRadius: 0.357, tire: '355/25 ZR22',
-    perf: { vmax: 350, t100: 2.5, t200: 5.5, brake100: 30.0 },
+    perf: { vmax: 350, t100: 2.5, t200: 7.0, brake100: 30.0 },
     dash: { style: 'lambo-revuelto', dialMax: 10000, redline: 9500, hybrid: true,
             modes: [{ name: 'CITTÀ', aggr: 0.0, color: '#3ddc84' }, { name: 'STRADA', aggr: 0.2, color: '#e8f4ff' }, { name: 'SPORT', aggr: 0.6, color: '#ffc400' }, { name: 'CORSA', aggr: 1.0, color: '#ff3b30' }] },
     sound: { res: [[130, 2.0, 1.0], [720, 3.2, 0.8], [3000, 4.5, 0.55]], direct: 0.5, drive: 2.5,
@@ -272,5 +272,32 @@ window.CARS = [
     sound: { res: [[120, 2.0, 1.0], [480, 2.8, 0.8], [1900, 3.6, 0.45]], direct: 0.6, drive: 2.4,
              noise: 0.3, lpBase: 1300, lpRpm: 0.5, lpLoad: 2000, pops: 0.12, crack: 0.9, turbo: 0.05,
              bank: [1, 0.96, 1.03, 0.97, 1.0, 0.95, 1.04, 0.98] },
+  },
+  {
+    id: 'nevera-r',
+    brand: 'Rimac',
+    model: 'Nevera R',
+    year: 2025,
+    color: '#2bd9a6',
+    ev: { batteryKwh: 108, baseKmh: 80, pLow: 0.55, vFullKmh: 250, regen: 0.12 },
+    engine: {
+      // 4 permanent-magnet motors, one per wheel; "limiter" is the motor speed at top speed
+      layout: '4 electric motors (torque vectoring)', cylinders: 0, aspiration: 'EV',
+      idle: 0, limiter: 24000, powerKw: 1571, powerRpm: 0, torqueNm: 2340, torqueRpm: 0,
+    },
+    trans: { name: 'Single-speed, one reduction gearbox per motor', gears: [1], shiftTime: 0, launchRpm: 0, topGearRpm: 24000 },
+    drive: 'AWD', dryKg: 2150, massKg: 2225, tireRadius: 0.35, tire: '275/35 R20 F · 315/30 R21 R',
+    // Rimac record figures: 0-100 1.72 s, 0-300 7.89 s (plus 0-160.9 2.96 s, 1/4 mile 7.90 s used to fit the
+    // power ramp). Rimac quotes no separate 0-200, so it is not a calibration target. 100-0 is an estimate.
+    perf: { vmax: 412, vmaxAero: 436, t100: 1.72, t200: null, t300: 7.89, calKmh: 300, brake100: 29.0, estBrake: true },
+    speedLimit: 412,
+    option: { label: 'LIMITER', default: 0, choices: [{ name: '412 km/h', speedLimit: 412 }, { name: '431 km/h (Rimac oversight)', speedLimit: 431 }] },
+    dash: { style: 'rimac', dialMax: 24000, redline: 24000, defaultMode: 2,
+            modes: [{ name: 'RANGE', aggr: 0, powerCap: 0.35, regen: 0.18, front: 0.6 },
+                    { name: 'CRUISE', aggr: 0, powerCap: 0.6, regen: 0.12, front: 0.45 },
+                    { name: 'SPORT', aggr: 0, powerCap: 0.85, regen: 0.1, front: 0.38 },
+                    { name: 'DRIFT', aggr: 0, powerCap: 0.9, regen: 0.05, front: 0.1 },
+                    { name: 'TRACK', aggr: 0, powerCap: 1.0, regen: 0.15, front: 0.42 }] },
+    sound: { ev: true, whine: 0.26, gear: 0.11, wind: 0.3 },
   },
 ];
