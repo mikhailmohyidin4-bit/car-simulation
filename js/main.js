@@ -304,6 +304,14 @@
     }).join('\n\n');
   }
 
+  // opened by double-clicking index.html: recorded sounds can't load from file://
+  if (location.protocol === 'file:') {
+    const b = document.createElement('div');
+    b.className = 'fileWarn';
+    b.innerHTML = '⚠ Opened as a file, so recorded engine sounds and some controllers won\'t work. ' +
+      'Close this tab and double-click <b>START.bat</b> (Windows) or <b>start.command</b> (Mac), or use XAMPP.';
+    document.body.prepend(b);
+  }
   renderGarage();
   renderButtons();
 })();

@@ -1,0 +1,8 @@
+# XAMPP / Apache: make sure audio and data files get the right types
+AddType audio/wav .wav
+AddType audio/mpeg .mp3
+AddType application/json .json
+AddType application/javascript .js
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-cache"
+</IfModule>

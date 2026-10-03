@@ -92,3 +92,5 @@ pre#raw { background: #0a0b0d; border: 1px solid var(--line); padding: 10px; bor
   .pedals { grid-template-columns: 1fr; }
   .vol { margin-left: 0; }
 }
+
+.fileWarn { background: #3a2a00; border-bottom: 1px solid #ffc400; color: #ffe08a; padding: 10px 16px; text-align: center; font-weight: 600; }

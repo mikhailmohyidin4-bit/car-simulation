@@ -45,7 +45,7 @@ Above the highest recorded rpm, the sound crossfades to the synth (`synthAbove`)
 - `volume`, `startupVolume` and `synthAbove` can also be tuned.
 - The `_src` field records where in the original recording each loop came from.
 
-The app has to be served (`python -m http.server`). Opening `index.html` directly cannot load these files.
+The app has to be served over `http://localhost` (START.bat, XAMPP or `start.command`). Opening `index.html` directly cannot load these files.
 
 ## What kind of recording works
 

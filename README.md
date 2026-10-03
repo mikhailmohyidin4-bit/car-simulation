@@ -4,14 +4,25 @@ A browser dashboard and engine simulator for Lamborghini and Ferrari supercars. 
 
 ## Run it
 
-It is a static site with no build step. Serve the folder and open it in Chrome or Edge:
+The app is a static site with no build step. It needs to be served over `http://localhost`, not opened as a file: recorded engine sounds and some controllers don't work from `file://`. Use Chrome or Edge.
 
-```bash
-python3 -m http.server 8000
-# then open http://localhost:8000
-```
+### Windows: double-click `START.bat` (easiest)
 
-Double-clicking `index.html` also works. A local server is still better, because some browsers restrict the Gamepad API and AudioWorklet on `file://`.
+1. Double-click `START.bat`. It starts a small local server using PowerShell, which ships with Windows, so nothing needs installing.
+2. The browser opens at `http://localhost:8000` (or 8001 and up if 8000 is busy).
+3. Keep the black window open while you play. Close it to stop the server.
+
+If Windows SmartScreen warns about the file, click **More info → Run anyway**.
+
+### XAMPP
+
+1. Copy the whole `car-simulation` folder into `C:\xampp\htdocs\`.
+2. Open the XAMPP Control Panel and click **Start** next to **Apache**.
+3. Open `http://localhost/car-simulation/`.
+
+### macOS / Linux
+
+Double-click `start.command` (macOS), or run `./start.command`. It uses the Python that ships with macOS.
 
 ## Cars
 
